@@ -205,7 +205,7 @@ section{padding:60px 24px;max-width:600px;margin:0 auto}
     <p class="hero-sub">DurcaplastApp — herramienta gratuita para hacer presupuestos profesionales en segundos, con carta de colores Durcaplast integrada.</p>
     <div class="hero-name">
       Preparado especialmente para<br>
-      <strong>Manuel Jesús Lora</strong>
+      <strong id="nombre-destinatario">tu empresa</strong>
     </div>
     <a href="#solucion" class="btn-primary">📱 Ver cómo funciona</a>
     <div class="scroll-hint">▼ Desliza para ver</div>
@@ -326,6 +326,12 @@ section{padding:60px 24px;max-width:600px;margin:0 auto}
 
 <script>
 window.addEventListener('load', function() {
+  // Leer nombre de la URL ?nombre=Manuel
+  var params = new URLSearchParams(window.location.search);
+  var nombre = params.get('nombre');
+  if (nombre) {
+    document.getElementById('nombre-destinatario').textContent = decodeURIComponent(nombre);
+  }
   setTimeout(function() {
     document.getElementById('loader').classList.add('hide');
     var main = document.getElementById('main');
