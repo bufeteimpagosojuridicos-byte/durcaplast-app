@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DurcaplastApp">
+<title>DurcaplastApp · Presupuestador</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --primary: #2d7a2d;
+  --accent: #f59e0b;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --robert-yellow: #2d7a2d;
+  --robert-blue: #1a4d1a;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* SETUP SCREEN */
+#setup-screen {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.setup-card {
+  background: white; border-radius: 20px; padding: 32px 24px;
+  width: 100%; max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+.setup-logo {
+  text-align: center; margin-bottom: 24px;
+}
+.setup-logo .brush-icon {
+  font-size: 48px; display: block; margin-bottom: 8px;
+}
+.setup-logo h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px; color: #0f172a;
+}
+.setup-logo p { color: #64748b; font-size: 14px; margin-top: 4px; }
+
+.setup-field { margin-bottom: 16px; }
+.setup-field label {
+  display: block; font-size: 13px; font-weight: 600;
+  color: #374151; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.setup-field input, .setup-field select {
+  width: 100%; padding: 12px 14px;
+  border: 2px solid #e2e8f0; border-radius: 10px;
+  font-size: 15px; font-family: 'DM Sans', sans-serif;
+  transition: border-color 0.2s;
+  background: #f8fafc;
+}
+.setup-field input:focus, .setup-field select:focus {
+  outline: none; border-color: #003d8f; background: white;
+}
+
+.color-picker { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.color-opt {
+  width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+  border: 3px solid transparent; transition: transform 0.2s, border-color 0.2s;
+  position: relative;
+}
+.color-opt.sel { border-color: #0f172a; transform: scale(1.15); }
+.color-opt.sel::after {
+  content: '✓'; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%); color: white; font-size: 14px; font-weight: 700;
+}
+
+.btn-create {
+  width: 100%; padding: 15px;
+  background: linear-gradient(135deg, #2d7a2d, #1a4d1a);
+  color: white; border: none; border-radius: 12px;
+  font-size: 16px; font-weight: 700; cursor: pointer;
+  margin-top: 8px; font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.3px; transition: transform 0.1s;
+}
+.btn-create:active { transform: scale(0.98); }
+
+.robert-setup {
+  text-align: center; margin-top: 20px; padding-top: 16px;
+  border-top: 2px solid #f5c800;
+}
+.robert-setup span { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; }
+.robert-setup strong { display: block; font-size: 14px; color: #003d8f; font-weight: 700; margin-top: 2px; }
+
+/* MAIN APP */
+#main-app { display: none; }
+
+.app-header {
+  padding: 0 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+  min-height: 60px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header-initials {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800; color: white;
+  background: rgba(255,255,255,0.25);
+}
+.header-name { font-weight: 700; font-size: 15px; color: white; line-height: 1.1; }
+.header-sub { font-size: 11px; color: rgba(255,255,255,0.75); }
+.btn-settings {
+  background: rgba(255,255,255,0.2); border: none; color: white;
+  width: 36px; height: 36px; border-radius: 9px; font-size: 16px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+
+/* Robert sponsor bar */
+.robert-bar {
+  background: var(--robert-yellow);
+  display: flex; align-items: center; justify-content: center; gap-10px;
+  padding: 7px 16px; gap: 8px;
+}
+.robert-bar span { font-size: 11px; color: var(--robert-blue); font-weight: 600; }
+.robert-bar .rb-name { font-size: 13px; font-weight: 800; color: var(--robert-blue); }
+.robert-bar .rb-phone { font-size: 11px; color: var(--robert-blue); opacity: 0.8; }
+
+/* Content */
+.content { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+.section-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; margin-top: 20px;
+}
+.section-title:first-child { margin-top: 0; }
+
+/* Client fields */
+.client-card {
+  background: var(--card); border-radius: 14px; padding: 16px;
+  box-shadow: var(--shadow); margin-bottom: 16px;
+}
+.field-row { margin-bottom: 12px; }
+.field-row:last-child { margin-bottom: 0; }
+.field-row label { font-size: 12px; font-weight: 600; color: var(--muted); display: block; margin-bottom: 4px; }
+.field-with-mic { display: flex; gap: 8px; align-items: center; }
+.field-with-mic input, .field-with-mic textarea {
+  flex: 1; padding: 10px 12px;
+  border: 1.5px solid var(--border); border-radius: 9px;
+  font-size: 14px; font-family: 'DM Sans', sans-serif;
+  background: #f8fafc; min-width: 0;
+  transition: border-color 0.2s;
+}
+.field-with-mic input:focus, .field-with-mic textarea:focus {
+  outline: none; border-color: var(--primary); background: white;
+}
+.field-with-mic textarea { min-height: 60px; resize: none; }
+.mic-btn {
+  width: 38px; height: 38px; border-radius: 9px; border: none;
+  background: #eff6ff; color: var(--primary); font-size: 17px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background 0.2s;
+}
+.mic-btn.listening { background: #fee2e2; animation: pulse 0.8s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+/* Partides */
+.partida-card {
+  background: var(--card); border-radius: 14px; padding: 14px 16px;
+  box-shadow: var(--shadow); margin-bottom: 10px;
+  border-left: 4px solid var(--primary);
+  animation: slideIn 0.2s ease;
+}
+@keyframes slideIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+.partida-top { display: flex; align-items: center; gap-8px; gap: 8px; margin-bottom: 10px; }
+.partida-name {
+  flex: 1; padding: 8px 10px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 14px; font-family: 'DM Sans', sans-serif;
+  background: #f8fafc; min-width: 0;
+}
+.partida-name:focus { outline: none; border-color: var(--primary); background: white; }
+.btn-del {
+  width: 32px; height: 32px; border-radius: 8px; border: none;
+  background: #fee2e2; color: #ef4444; font-size: 15px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.partida-nums { display: flex; flex-direction: column; gap: 8px; }
+.num-row { display: flex; align-items: center; gap: 8px; }
+.num-row label { font-size: 12px; font-weight: 600; color: var(--muted); width: 48px; flex-shrink: 0; }
+.num-row input {
+  flex: 1; padding: 9px 10px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 14px; font-family: 'DM Sans', sans-serif;
+  background: #f8fafc; min-width: 0; text-align: right;
+}
+.num-row input:focus { outline: none; border-color: var(--primary); background: white; }
+.num-mic { width: 34px; height: 34px; border-radius: 8px; border: none; background: #eff6ff; color: var(--primary); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
+.num-mic.listening { background: #fee2e2; animation: pulse 0.8s infinite; }
+
+.add-partida-btn {
+  width: 100%; padding: 13px;
+  background: white; border: 2px dashed var(--border);
+  border-radius: 12px; font-size: 14px; font-weight: 600;
+  color: var(--primary); cursor: pointer; margin-bottom: 16px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.add-partida-btn:hover { border-color: var(--primary); background: #eff6ff; }
+
+/* Summary */
+.summary-card {
+  background: var(--card); border-radius: 14px; padding: 16px;
+  box-shadow: var(--shadow); margin-bottom: 16px;
+}
+.sum-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; border-bottom: 1px solid var(--border); }
+.sum-row:last-child { border-bottom: none; }
+.sum-row.total { font-weight: 700; font-size: 16px; color: var(--primary); }
+.sum-row.total span:last-child { font-size: 18px; }
+
+.iva-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+.iva-row label { font-size: 13px; font-weight: 600; color: var(--muted); }
+.iva-row select {
+  padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 14px; font-family: 'DM Sans', sans-serif; background: #f8fafc;
+}
+
+/* Action buttons */
+.action-btns { display: flex; gap: 10px; margin-bottom: 20px; }
+.btn-pdf, .btn-clear {
+  flex: 1; padding: 14px; border-radius: 12px; border: none;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: transform 0.1s;
+}
+.btn-pdf { background: linear-gradient(135deg, var(--primary), #1d4ed8); color: white; }
+.btn-clear { background: #f1f5f9; color: var(--muted); }
+.btn-pdf:active, .btn-clear:active { transform: scale(0.97); }
+
+/* Robert footer */
+.robert-footer {
+  background: white; border-radius: 14px; padding: 14px 16px;
+  box-shadow: var(--shadow); margin-bottom: 24px;
+  border-top: 3px solid var(--robert-yellow);
+  display: flex; align-items: center; gap: 12px;
+}
+.rf-logo {
+  width: 44px; height: 44px; background: var(--robert-yellow);
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.rf-info { flex: 1; }
+.rf-info strong { display: block; font-size: 14px; color: var(--robert-blue); font-weight: 800; }
+.rf-info span { font-size: 12px; color: var(--muted); }
+.rf-call {
+  background: var(--robert-blue); color: white;
+  border: none; border-radius: 9px; padding: 9px 14px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; text-decoration: none;
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* Toast */
+#toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  background: #0f172a; color: white; padding: 10px 18px;
+  border-radius: 20px; font-size: 13px; font-weight: 500;
+  opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 9999;
+  white-space: nowrap; max-width: 90vw; text-align: center;
+}
+#toast.show { opacity: 1; }
+
+/* Listening overlay */
+#listen-overlay {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: #ef4444; color: white; padding: 10px 20px; border-radius: 20px;
+  font-size: 13px; font-weight: 700; display: none; z-index: 9999;
+  animation: pulse 0.8s infinite;
+}
+</style>
+
+  <link rel="apple-touch-icon" href="https://www.durcaplast.com/wp-content/uploads/2019/01/logo-durcaplast.png">
+  <link rel="icon" type="image/png" href="https://www.durcaplast.com/wp-content/uploads/2019/01/logo-durcaplast.png">
+<script>
+var manifestData = {
+  "name": "PintorApp - Durcaplast · Fábrica de Pinturas",
+  "short_name": "PintorApp",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#2d7a2d",
+  "theme_color": "#2d7a2d",
+  "icons": [{"src": "https://www.durcaplast.com/wp-content/uploads/2019/01/logo-durcaplast.png", "sizes": "192x192", "type": "image/png"}, {"src": "https://www.durcaplast.com/wp-content/uploads/2019/01/logo-durcaplast.png", "sizes": "512x512", "type": "image/png"}]
+};
+var blob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+var manifestURL = URL.createObjectURL(blob);
+var link = document.createElement('link');
+link.rel = 'manifest'; link.href = manifestURL;
+document.head.appendChild(link);
+</script>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast"></div>
+<div id="listen-overlay">🎤 Escuchando...</div>
+
+<!-- BLOCKED SCREEN -->
+<div id="blocked-screen" style="display:none;position:fixed;inset:0;z-index:9999;background:#0a0a0f;display:none;align-items:center;justify-content:center;flex-direction:column;padding:32px;text-align:center;">
+  <div style="font-size:60px;margin-bottom:16px;" id="blocked-icon">🔒</div>
+  <h2 style="font-family:'DM Sans',sans-serif;color:#f0f0f8;font-size:20px;margin-bottom:10px;" id="blocked-title">App no disponible</h2>
+  <p style="color:#6b6b8a;font-size:14px;max-width:280px;line-height:1.5;" id="blocked-msg">Contacta con Durcaplast · Fábrica de Pinturas para activar tu app.</p>
+  <div style="margin-top:24px;">
+    <a href="tel:928882852" style="background:#f5c800;color:#0a0a0f;padding:12px 24px;border-radius:12px;font-weight:700;font-size:14px;text-decoration:none;display:inline-block;">📞 Contactar</a>
+  </div>
+</div>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-logo">
+      <img src="https://www.durcaplast.com/wp-content/uploads/2019/01/logo-durcaplast.png" style="width:64px;height:64px;border-radius:16px;margin-bottom:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);" alt="PintorApp">
+      <h1>DurcaplastApp</h1>
+      <p>Configura tu app en 30 segundos</p>
+    </div>
+
+    <div class="setup-field">
+      <label>Tu nombre o empresa</label>
+      <div class="field-with-mic">
+        <input type="text" id="s-nom" placeholder="Juan Pintores / Pinturas García...">
+        <button class="mic-btn" onclick="vozSetup('s-nom',this)">🎤</button>
+      </div>
+    </div>
+    <div class="setup-field">
+      <label>Teléfono</label>
+      <div class="field-with-mic">
+        <input type="tel" id="s-tel" placeholder="612 345 678">
+        <button class="mic-btn" onclick="vozSetup('s-tel',this)">🎤</button>
+      </div>
+    </div>
+    <div class="setup-field">
+      <label>Población</label>
+      <div class="field-with-mic">
+        <input type="text" id="s-pob" placeholder="Madrid, Granada, Sevilla...">
+        <button class="mic-btn" onclick="vozSetup('s-pob',this)">🎤</button>
+      </div>
+    </div>
+    <div class="setup-field">
+      <label>Especialidad</label>
+      <select id="s-esp">
+        <option>Pintura interior y exterior</option>
+        <option>Pintura industrial</option>
+        <option>Decoración y pintura</option>
+        <option>Impermeabilizaciones</option>
+        <option>Pintura y reformas</option>
+        <option>Pintor autónomo</option>
+      </select>
+    </div>
+    <div class="setup-field">
+      <label>Color de tu app</label>
+      <div class="color-picker">
+        <div class="color-opt sel" data-color="#2563eb" style="background:#003d8f" onclick="selColor(this)"></div>
+        <div class="color-opt" data-color="#7c3aed" style="background:#7c3aed" onclick="selColor(this)"></div>
+        <div class="color-opt" data-color="#059669" style="background:#059669" onclick="selColor(this)"></div>
+        <div class="color-opt" data-color="#dc2626" style="background:#dc2626" onclick="selColor(this)"></div>
+        <div class="color-opt" data-color="#d97706" style="background:#d97706" onclick="selColor(this)"></div>
+        <div class="color-opt" data-color="#0891b2" style="background:#0891b2" onclick="selColor(this)"></div>
+        <div class="color-opt" data-color="#1e293b" style="background:#1e293b" onclick="selColor(this)"></div>
+      </div>
+    </div>
+
+    <div class="setup-field">
+      <label>Tu logo (opcional)</label>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="logo-preview" style="width:56px;height:56px;border-radius:12px;border:2px dashed #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;overflow:hidden;">🖼</div>
+        <div style="flex:1;">
+          <label for="logo-file" style="display:block;width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:700;color:#003d8f;background:white;cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;">
+            📁 Seleccionar imagen
+          </label>
+          <input type="file" id="logo-file" accept="image/*" style="display:none;" onchange="cargarLogo(this)">
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px;text-align:center;">PNG, JPG · Aparece en el PDF</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-create" onclick="crearApp()">🚀 Crear mi app</button>
+
+    <div class="robert-setup" style="border-top:3px solid #2d7a2d;"><div style="display:flex;flex-direction:column;align-items:center;gap:8px;"><img src="https://www.durcaplast.com/wp-content/uploads/2019/01/logo-durcaplast.png" style="height:56px;object-fit:contain;"><span style="font-size:13px;font-weight:800;color:#2d7a2d;">Presupuestador Oficial Durcaplast</span><span style="font-size:11px;color:#9ca3af;">Fábrica de Pinturas · Dúrcal, Granada · Desde 1990</span></div></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-app">
+  <div class="app-header" id="app-header">
+    <div class="header-left">
+      <div class="header-initials" id="header-initials">JM</div>
+      <div>
+        <div class="header-name" id="header-name">El meu nom</div>
+        <div class="header-sub" id="header-sub">DurcaplastApp</div>
+      </div>
+    </div>
+    <button class="btn-settings" onclick="resetApp()" title="Cambiar datos">⚙</button>
+  </div>
+
+  <div class="robert-bar" style="background:#2d7a2d;"><img src="https://www.durcaplast.com/wp-content/uploads/2019/01/logo-durcaplast.png" style="height:34px;border-radius:6px;background:white;padding:2px;object-fit:contain;"><span class="rb-name" style="color:white;">Durcaplast · Fábrica de Pinturas</span><span style="color:white;">·</span><span class="rb-phone" style="color:rgba(255,255,255,0.8);">📍 Dúrcal, Granada</span></div>
+
+  <div class="content">
+
+    <div class="section-title">📋 Datos del cliente</div>
+    <div class="client-card">
+      <div class="field-row">
+        <label>Nombre del cliente</label>
+        <div class="field-with-mic">
+          <input type="text" id="cli-nom" placeholder="Nombre y apellidos...">
+          <button class="mic-btn" onclick="vozCampo('cli-nom',this)">🎤</button>
+        </div>
+      </div>
+      <div class="field-row">
+        <label>Dirección de la obra</label>
+        <div class="field-with-mic">
+          <input type="text" id="cli-adr" placeholder="Calle, número, piso...">
+          <button class="mic-btn" onclick="vozCampo('cli-adr',this)">🎤</button>
+        </div>
+      </div>
+      <div class="field-row">
+        <label>Fecha del presupuesto</label>
+        <div class="field-with-mic">
+          <input type="date" id="cli-data">
+          <button class="mic-btn" onclick="vozCampo('cli-data',this)">🎤</button>
+        </div>
+      </div>
+      <div class="field-row">
+        <label>Observaciones</label>
+        <div class="field-with-mic">
+          <textarea id="cli-obs" placeholder="Notas importantes..."></textarea>
+          <button class="mic-btn" onclick="vozCampo('cli-obs',this)">🎤</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">🛠 Partidas de trabajo</div>
+    <div id="partides-container"></div>
+
+    <button class="add-partida-btn" onclick="afegirPartida()">＋ Añadir partida</button>
+
+    <div class="section-title">💶 Resumen económico</div>
+    <div class="summary-card">
+      <div class="sum-row">
+        <span>Subtotal (sin IVA)</span>
+        <span id="sum-base">0,00 €</span>
+      </div>
+      <div class="iva-row">
+        <label>IVA:</label>
+        <select id="iva-sel" onchange="calcular()">
+          <option value="0">Sin IVA</option>
+          <option value="10" selected>IVA 10% (Reducido)</option>
+          <option value="21">IVA 21% (General)</option>
+        </select>
+      </div>
+      <div class="sum-row">
+        <span>Importe IVA</span>
+        <span id="sum-iva">0,00 €</span>
+      </div>
+      <div class="sum-row total">
+        <span>TOTAL</span>
+        <span id="sum-total">0,00 €</span>
+      </div>
+    </div>
+
+    <div class="action-btns">
+      <button class="btn-pdf" onclick="generarPDF()">📄 Generar PDF</button>
+      <button class="btn-clear" onclick="netejar()">🗑 Limpiar</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;"><button onclick="abrirCartaDurcaplast()" style="padding:10px 4px;border-radius:12px;border:2px solid #2d7a2d;background:white;color:#2d7a2d;font-size:12px;font-weight:700;cursor:pointer;">🟢 Durcaplast</button><button onclick="abrirCartaNCS()" style="padding:10px 4px;border-radius:12px;border:2px solid #1a5ea6;background:white;color:#1a5ea6;font-size:12px;font-weight:700;cursor:pointer;">🎨 NCS</button><button onclick="abrirCartaRAL()" style="padding:10px 4px;border-radius:12px;border:2px solid #c0392b;background:white;color:#c0392b;font-size:12px;font-weight:700;cursor:pointer;">🎨 RAL</button></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      <button onclick="abrirCartaNCS()" style="padding:13px;border-radius:12px;border:2px solid #003d8f;background:white;color:#003d8f;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+        🎨 Carta NCS
+      </button>
+      <button onclick="abrirCartaRAL()" style="padding:13px;border-radius:12px;border:2px solid #c0392b;background:white;color:#c0392b;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+        🎨 Carta RAL
+      </button>
+    </div>
+    <div id="pwa-install-bar" style="display:none;margin-bottom:16px;">
+      <button id="btnInstalar" onclick="instalarPWA()" style="
+        width:100%;padding:13px;border-radius:12px;border:none;
+        background:linear-gradient(135deg,#003d8f,#002060);
+        color:white;font-size:14px;font-weight:700;
+        font-family:'DM Sans',sans-serif;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;gap:8px;">
+        📲 Instalar DurcaplastApp
+      </button>
+    </div>
+    <div class="robert-footer" style="border-top:3px solid #2d7a2d;"><img src="https://www.durcaplast.com/wp-content/uploads/2019/01/logo-durcaplast.png" style="width:52px;height:52px;border-radius:10px;object-fit:contain;background:white;padding:4px;border:2px solid #2d7a2d;flex-shrink:0;"><div class="rf-info"><strong style="color:#2d7a2d;">Durcaplast · Fábrica de Pinturas</strong><span>Calidad profesional desde 1990 · Dúrcal, Granada</span></div><a class="rf-call" href="https://durcaplast.com" target="_blank" style="background:#2d7a2d;">🌐 Web</a></div>
+  </div>
+</div>
+
+<script>
+// ─── APP DATA ───────────────────────────────────────────────────────────────
+var userData = null;
+var partides = [];
+var partidaId = 0;
+
+// Predefined partides (price=0 so painter enters their own)
+var PARTIDES_BASE = [
+  'Encintado y Proteccion Previa',
+  'Saneado del Soporte',
+  'Fijador Durcaplast (Imper-Durcaplast)',
+  'Pintura Plastica Interior Durcaplast',
+  'Pintura Plastica Exterior Durcaplast',
+  'Pintura Fachadas Colores Durcaplast',
+  'Revestimiento Liso Fachada Durcaplast',
+  'Impermeabilizante Atienza Durcaplast',
+  'Esmalte Puertas y Ventanas',
+  'Barniz Madera',
+  'Pintura Suelos Durcaplast',
+  'Pintura Piscinas Durcaplast',
+  'Gotele / Proyectado',
+  'Antimoho Durcaplast',
+  'Imprimacion / Sellador',
+  'Desplazamiento',
+  'Preparacion Superficie',
+  'Montaje/Desmontaje Andamio',
+  'Limpieza Final'
+];
+
+// ─── SETUP ───────────────────────────────────────────────────────────────────
+window.onload = function() {
+  var saved = localStorage.getItem('pintor_user');
+  if (saved) {
+    userData = JSON.parse(saved);
+    iniciarApp();
+  }
+  // Set today's date
+  var today = new Date().toISOString().split('T')[0];
+  var df = document.getElementById('cli-data');
+  if (df) df.value = today;
+};
+
+var selectedColor = '#2d7a2d';
+
+function selColor(el) {
+  document.querySelectorAll('.color-opt').forEach(function(c) { c.classList.remove('sel'); });
+  el.classList.add('sel');
+  selectedColor = el.getAttribute('data-color');
+}
+
+var logoBase64 = null;
+
+function cargarLogo(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    logoBase64 = e.target.result;
+    var prev = document.getElementById('logo-preview');
+    prev.innerHTML = '<img src="' + logoBase64 + '" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">';
+  };
+  reader.readAsDataURL(file);
+}
+
+function crearApp() {
+  var nom = document.getElementById('s-nom').value.trim();
+  var tel = document.getElementById('s-tel').value.trim();
+  var pob = document.getElementById('s-pob').value.trim();
+  var esp = document.getElementById('s-esp').value;
+  if (!nom) { showToast('⚠️ Escribe tu nombre o empresa'); return; }
+  userData = { nom: nom, tel: tel, pob: pob, esp: esp, color: selectedColor, logo: logoBase64 };
+  localStorage.setItem('pintor_user', JSON.stringify(userData));
+  iniciarApp();
+}
+
+function iniciarApp() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  // Apply color
+  document.documentElement.style.setProperty('--primary', userData.color);
+  // Header
+  var initials = userData.nom.split(' ').map(function(w){return w[0];}).join('').substring(0,2).toUpperCase();
+  var headerInit = document.getElementById('header-initials');
+  if (userData.logo) {
+    headerInit.innerHTML = '<img src="' + userData.logo + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">';
+    headerInit.style.background = 'transparent';
+  } else {
+    headerInit.textContent = initials;
+    headerInit.style.background = 'rgba(255,255,255,0.25)';
+  }
+  document.getElementById('header-name').textContent = userData.nom;
+  document.getElementById('header-sub').textContent = userData.esp || 'DurcaplastApp';
+  document.getElementById('app-header').style.background = userData.color;
+  // Today date
+  var today = new Date().toISOString().split('T')[0];
+  var df = document.getElementById('cli-data');
+  if (df && !df.value) df.value = today;
+  // Default partida
+  if (partides.length === 0) afegirPartida();
+  // Restaurar logo si existe
+  if (userData.logo) logoBase64 = userData.logo;
+}
+
+function resetApp() {
+  if (!confirm('¿Quieres cambiar tus datos?')) return;
+  localStorage.removeItem('pintor_user');
+  userData = null;
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('setup-screen').style.display = 'flex';
+}
+
+// ─── PARTIDES ─────────────────────────────────────────────────────────────────
+function afegirPartida() {
+  var id = ++partidaId;
+  partides.push({ id: id, nom: '', cant: 0, preu: 0 });
+  renderPartides();
+}
+
+function renderPartides() {
+  var c = document.getElementById('partides-container');
+  if (!c) return;
+  c.innerHTML = '';
+  partides.forEach(function(p) {
+    var div = document.createElement('div');
+    div.className = 'partida-card';
+    div.setAttribute('data-pid', p.id);
+
+    // Name row
+    var topDiv = document.createElement('div');
+    topDiv.className = 'partida-top';
+    var selBtn = document.createElement('button');
+    selBtn.className = 'mic-btn';
+    selBtn.style.background = '#f0fdf4';
+    selBtn.style.color = '#059669';
+    selBtn.textContent = '📋';
+    selBtn.title = 'Elegir partida';
+    (function(pid){ selBtn.addEventListener('click', function(){ triarPartida(pid); }); })(p.id);
+
+    var nameInp = document.createElement('input');
+    nameInp.className = 'partida-name';
+    nameInp.placeholder = 'Descripción de la Partida...';
+    nameInp.value = p.nom;
+    (function(pid){ nameInp.addEventListener('input', function(){ updatePartida(pid,'nom',this.value); }); })(p.id);
+
+    var micName = document.createElement('button');
+    micName.className = 'mic-btn';
+    micName.textContent = '🎤';
+    var nameInpRef = nameInp;
+    addVozListener(micName, nameInpRef, false);
+
+    var delBtn = document.createElement('button');
+    delBtn.className = 'btn-del';
+    delBtn.textContent = '✕';
+    (function(pid){ delBtn.addEventListener('click', function(){ eliminarPartida(pid); }); })(p.id);
+
+    topDiv.appendChild(selBtn);
+    topDiv.appendChild(nameInp);
+    topDiv.appendChild(micName);
+    topDiv.appendChild(delBtn);
+
+    // Num rows
+    var numsDiv = document.createElement('div');
+    numsDiv.className = 'partida-nums';
+
+    // Cant
+    var cantRow = document.createElement('div');
+    cantRow.className = 'num-row';
+    var cantLabel = document.createElement('label');
+    cantLabel.textContent = 'Cant.';
+    var cantInp = document.createElement('input');
+    cantInp.type = 'number'; cantInp.min = '0'; cantInp.step = '0.01';
+    cantInp.placeholder = '0';
+    cantInp.value = p.cant > 0 ? p.cant : '';
+    (function(pid){ cantInp.addEventListener('input', function(){ updatePartida(pid,'cant',parseFloat(this.value)||0); calcular(); }); })(p.id);
+    var micCant = document.createElement('button');
+    micCant.className = 'num-mic';
+    micCant.textContent = '🎤';
+    addVozListener(micCant, cantInp, true);
+
+    cantRow.appendChild(cantLabel);
+    cantRow.appendChild(cantInp);
+    cantRow.appendChild(micCant);
+
+    // Preu
+    var preuRow = document.createElement('div');
+    preuRow.className = 'num-row';
+    var preuLabel = document.createElement('label');
+    preuLabel.textContent = 'Precio €';
+    var preuInp = document.createElement('input');
+    preuInp.type = 'number'; preuInp.min = '0'; preuInp.step = '0.01';
+    preuInp.placeholder = '0,00';
+    preuInp.value = p.preu > 0 ? p.preu : '';
+    (function(pid){ preuInp.addEventListener('input', function(){ updatePartida(pid,'preu',parseFloat(this.value)||0); calcular(); }); })(p.id);
+    var micPreu = document.createElement('button');
+    micPreu.className = 'num-mic';
+    micPreu.textContent = '🎤';
+    addVozListener(micPreu, preuInp, true);
+
+    preuRow.appendChild(preuLabel);
+    preuRow.appendChild(preuInp);
+    preuRow.appendChild(micPreu);
+
+    numsDiv.appendChild(cantRow);
+    numsDiv.appendChild(preuRow);
+
+    div.appendChild(topDiv);
+    div.appendChild(numsDiv);
+    c.appendChild(div);
+  });
+  calcular();
+}
+
+function triarPartida(pid) {
+  var existing = document.getElementById('partida-modal');
+  if (existing) existing.remove();
+  var modal = document.createElement('div');
+  modal.id = 'partida-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.55);display:flex;align-items:flex-end;justify-content:center;';
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:500px;max-height:78vh;overflow-y:auto;';
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'padding:16px 20px 12px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;border-radius:20px 20px 0 0;';
+  var titulo = document.createElement('span');
+  titulo.textContent = 'Seleccionar tipo de trabajo';
+  titulo.style.cssText = 'font-size:15px;font-weight:700;color:#0f172a;';
+  var btnCerrar = document.createElement('button');
+  btnCerrar.textContent = '✕';
+  btnCerrar.style.cssText = 'background:#f1f5f9;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:15px;color:#64748b;';
+  btnCerrar.addEventListener('click', function(){ modal.remove(); });
+  hdr.appendChild(titulo); hdr.appendChild(btnCerrar); box.appendChild(hdr);
+  var iconos = ['🛡️','🔨','🧪','🎨','🎨','🏠','🚪','🪵','💧','🔲','🖌','🏛','🚗','🚐','🔧','🏗','⚙️','🧹'];
+  PARTIDES_BASE.forEach(function(nom, i) {
+    var item = document.createElement('div');
+    item.style.cssText = 'padding:13px 20px;display:flex;align-items:center;gap:12px;cursor:pointer;border-bottom:1px solid #f8fafc;';
+    var icono = document.createElement('div');
+    icono.textContent = iconos[i] || '🔧';
+    icono.style.cssText = 'width:36px;height:36px;border-radius:9px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;';
+    var texto = document.createElement('span');
+    texto.textContent = nom;
+    texto.style.cssText = 'flex:1;font-size:14px;font-weight:500;color:#0f172a;';
+    var check = document.createElement('div');
+    check.textContent = '✓';
+    check.style.cssText = 'width:22px;height:22px;border-radius:50%;border:2px solid #003d8f;display:flex;align-items:center;justify-content:center;font-size:12px;color:#003d8f;flex-shrink:0;';
+    item.appendChild(icono); item.appendChild(texto); item.appendChild(check);
+    item.addEventListener('click', function() {
+      updatePartida(pid, 'nom', nom);
+      var card = document.querySelector('[data-pid="'+pid+'"]');
+      if (card) { var ni = card.querySelector('.partida-name'); if (ni) ni.value = nom; }
+      modal.remove();
+    });
+    item.addEventListener('mouseover', function(){ item.style.background='#f0f9ff'; });
+    item.addEventListener('mouseout', function(){ item.style.background=''; });
+    box.appendChild(item);
+  });
+  modal.appendChild(box); document.body.appendChild(modal);
+}
+
+function updatePartida(pid, field, val) {
+  var p = partides.find(function(x){ return x.id === pid; });
+  if (p) p[field] = val;
+  calcular();
+}
+
+function eliminarPartida(pid) {
+  partides = partides.filter(function(p){ return p.id !== pid; });
+  renderPartides();
+}
+
+// ─── VOICE ───────────────────────────────────────────────────────────────────
+var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+var activeBtn = null;
+
+function addVozListener(btn, inp, isNumber) {
+  var isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+  var ev = isMobile ? 'touchstart' : 'click';
+  btn.addEventListener(ev, function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    iniciarVoz(inp, btn, isNumber);
+  }, { passive: false });
+}
+
+function iniciarVoz(inp, btn, isNumber) {
+  if (!SpeechRec) { showToast('⚠️ Tu navegador no soporta la voz'); return; }
+  if (activeBtn && activeBtn !== btn) {
+    activeBtn.classList.remove('listening');
+  }
+  if (btn.classList.contains('listening')) {
+    btn.classList.remove('listening');
+    document.getElementById('listen-overlay').style.display = 'none';
+    activeBtn = null;
+    return;
+  }
+  var rec = new SpeechRec();
+  rec.lang = 'es-ES';
+  rec.interimResults = false;
+  rec.maxAlternatives = 3;
+  btn.classList.add('listening');
+  document.getElementById('listen-overlay').style.display = 'block';
+  activeBtn = btn;
+
+  rec.onresult = function(e) {
+    var transcript = '';
+    for (var i = 0; i < e.results[0].length; i++) {
+      var t = e.results[0][i].transcript.trim();
+      if (t) { transcript = t; break; }
+    }
+    btn.classList.remove('listening');
+    document.getElementById('listen-overlay').style.display = 'none';
+    activeBtn = null;
+    if (!transcript) return;
+    if (isNumber) {
+      var num = parseVozNumber(transcript);
+      inp.value = num;
+      inp.dispatchEvent(new Event('input'));
+      showToast('🎤 ' + transcript + ' → ' + num);
+    } else {
+      inp.value = transcript;
+      inp.dispatchEvent(new Event('input'));
+      showToast('🎤 ' + transcript);
+    }
+  };
+  rec.onerror = function(e) {
+    btn.classList.remove('listening');
+    document.getElementById('listen-overlay').style.display = 'none';
+    activeBtn = null;
+    if (e.error === 'no-speech') return;
+    showToast('⚠️ Error micro: ' + e.error);
+  };
+  rec.onend = function() {
+    btn.classList.remove('listening');
+    document.getElementById('listen-overlay').style.display = 'none';
+    activeBtn = null;
+  };
+  try { rec.start(); } catch(ex) { showToast('⚠️ No se ha podido iniciar el micrófono'); }
+}
+
+function vozSetup(fieldId, btn) {
+  var inp = document.getElementById(fieldId);
+  if (!inp) return;
+  iniciarVoz(inp, btn, false);
+}
+
+function vozCampo(fieldId, btn) {
+  var inp = document.getElementById(fieldId);
+  if (!inp) return;
+  iniciarVoz(inp, btn, false);
+}
+
+function parseVozNumber(txt) {
+  var t = txt.toLowerCase().trim();
+  var nums = { 'zero':0,'un':1,'una':1,'dos':2,'dues':2,'tres':3,'quatre':4,
+    'cinc':5,'sis':6,'set':7,'vuit':8,'nou':9,'deu':10,'onze':11,'dotze':12,
+    'tretze':13,'catorze':14,'quinze':15,'setze':16,'disset':17,'divuit':18,
+    'dinou':19,'vint':20,'trenta':30,'quaranta':40,'cinquanta':50,
+    'seixanta':60,'setanta':70,'vuitanta':80,'noranta':90,'cent':100,'dos-cents':200,
+    'cero':0,'uno':1,'dos':2,'tres':3,'cuatro':4,'cinco':5,'seis':6,
+    'siete':7,'ocho':8,'nueve':9,'diez':10,'once':11,'doce':12,
+    'veinte':20,'treinta':30,'cuarenta':40,'cincuenta':50,'sesenta':60,
+    'setenta':70,'ochenta':80,'noventa':90,'cien':100,'coma':'.','punt':'.','punto':'.' };
+  t = t.replace(/coma|punt|punto/g, '.');
+  for (var k in nums) { t = t.replace(new RegExp('\\b'+k+'\\b','g'), ' '+nums[k]+' '); }
+  t = t.replace(/\s+/g,' ').trim();
+  var n = parseFloat(t.replace(/[^0-9.]/g,''));
+  return isNaN(n) ? 0 : Math.round(n*100)/100;
+}
+
+// ─── CALCUL ───────────────────────────────────────────────────────────────────
+function calcular() {
+  var base = 0;
+  partides.forEach(function(p) { base += (p.cant || 0) * (p.preu || 0); });
+  var ivaPct = parseFloat(document.getElementById('iva-sel').value) || 0;
+  var iva = base * ivaPct / 100;
+  var total = base + iva;
+  document.getElementById('sum-base').textContent = fmt(base);
+  document.getElementById('sum-iva').textContent = fmt(iva);
+  document.getElementById('sum-total').textContent = fmt(total);
+}
+
+function fmt(n) { return n.toFixed(2).replace('.', ',') + ' €'; }
+
+// ─── PDF ──────────────────────────────────────────────────────────────────────
+function generarPDF() {
+  if (typeof jspdf === 'undefined' && typeof window.jspdf === 'undefined') {
+    showToast('⏳ Cargando PDF...'); return;
+  }
+  var { jsPDF } = window.jspdf;
+  var doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  var W = 210; var Y = 20;
+  var color = userData ? userData.color : '#2563eb';
+  var rgb = hexToRgb(color);
+
+  // Header band
+  doc.setFillColor(rgb.r, rgb.g, rgb.b);
+  doc.rect(0, 0, W, 30, 'F');
+  doc.setTextColor(255,255,255);
+  // Logo del empresario en PDF
+  if (userData && userData.logo) {
+    try {
+      doc.addImage(userData.logo, 'JPEG', 6, 4, 22, 22);
+      doc.setFontSize(16); doc.setFont('helvetica','bold');
+      doc.text(userData.nom, 32, 13);
+      doc.setFontSize(9); doc.setFont('helvetica','normal');
+      if (userData) doc.text(userData.esp + (userData.tel ? '  ·  ' + userData.tel : '') + (userData.pob ? '  ·  ' + userData.pob : ''), 32, 21);
+    } catch(e) {
+      doc.setFontSize(18); doc.setFont('helvetica','bold');
+      doc.text(userData.nom, 14, 13);
+      doc.setFontSize(9); doc.setFont('helvetica','normal');
+      if (userData) doc.text(userData.esp + (userData.tel ? '  ·  ' + userData.tel : '') + (userData.pob ? '  ·  ' + userData.pob : ''), 14, 21);
+    }
+  } else {
+    doc.setFontSize(18); doc.setFont('helvetica','bold');
+    doc.text(userData ? userData.nom : 'Presupuestador', 14, 13);
+    doc.setFontSize(9); doc.setFont('helvetica','normal');
+    if (userData) doc.text(userData.esp + (userData.tel ? '  ·  ' + userData.tel : '') + (userData.pob ? '  ·  ' + userData.pob : ''), 14, 21);
+  }
+  doc.text('PRESUPUESTO', W-14, 13, {align:'right'});
+  doc.text(new Date().toLocaleDateString('es-ES'), W-14, 21, {align:'right'});
+
+  Y = 38;
+  doc.setTextColor(30,30,30);
+
+  // Client
+  var nom = document.getElementById('cli-nom').value;
+  var adr = document.getElementById('cli-adr').value;
+  var obs = document.getElementById('cli-obs').value;
+  if (nom || adr) {
+    doc.setFontSize(10); doc.setFont('helvetica','bold');
+    doc.setTextColor(rgb.r, rgb.g, rgb.b);
+    doc.text('CLIENTE', 14, Y); Y += 5;
+    doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30);
+    doc.setFontSize(10);
+    if (nom) { doc.text(nom, 14, Y); Y += 5; }
+    if (adr) { doc.text(adr, 14, Y); Y += 5; }
+    Y += 3;
+  }
+
+  // Partides table
+  doc.setFillColor(rgb.r, rgb.g, rgb.b);
+  doc.rect(14, Y, W-28, 7, 'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(9); doc.setFont('helvetica','bold');
+  doc.text('DESCRIPCIÓN', 17, Y+5);
+  doc.text('CANT.', 130, Y+5, {align:'right'});
+  doc.text('PRECIO/u.', 160, Y+5, {align:'right'});
+  doc.text('TOTAL', W-14, Y+5, {align:'right'});
+  Y += 9; doc.setTextColor(30,30,30); doc.setFont('helvetica','normal');
+
+  partides.forEach(function(p, i) {
+    if (!p.nom && !p.preu) return;
+    if (i % 2 === 0) { doc.setFillColor(248,250,252); doc.rect(14, Y-4, W-28, 7, 'F'); }
+    var total = (p.cant||0)*(p.preu||0);
+    doc.text(p.nom || '-', 17, Y);
+    doc.text((p.cant||0).toString(), 130, Y, {align:'right'});
+    doc.text((p.preu||0).toFixed(2)+' €', 160, Y, {align:'right'});
+    doc.text(total.toFixed(2)+' €', W-14, Y, {align:'right'});
+    Y += 7;
+  });
+
+  Y += 5;
+  var base = parseFloat(document.getElementById('sum-base').textContent) || 0;
+  var total = parseFloat(document.getElementById('sum-total').textContent) || 0;
+  var ivaPct = document.getElementById('iva-sel').value;
+
+  doc.setFontSize(9);
+  doc.text('Base imponible:', 130, Y); doc.text(document.getElementById('sum-base').textContent, W-14, Y, {align:'right'}); Y+=5;
+  doc.text('IVA ('+ivaPct+'%):', 130, Y); doc.text(document.getElementById('sum-iva').textContent, W-14, Y, {align:'right'}); Y+=5;
+  doc.setFillColor(rgb.r, rgb.g, rgb.b);
+  doc.rect(120, Y-4, W-134, 8, 'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(11);
+  doc.text('TOTAL:', 130, Y+2); doc.text(document.getElementById('sum-total').textContent, W-14, Y+2, {align:'right'});
+  Y += 14; doc.setTextColor(30,30,30); doc.setFont('helvetica','normal');
+
+  if (obs) { doc.setFontSize(8); doc.text('Observaciones: '+obs, 14, Y); Y+=8; }
+
+  // Robert footer
+  Y = 270;
+  doc.setDrawColor(245, 200, 0); doc.setLineWidth(1);
+  doc.line(14, Y, W-14, Y); Y += 6;
+  doc.setFillColor(245,200,0); doc.rect(14, Y-4, 24, 10, 'F');
+  doc.setTextColor(0,61,143); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text('DURCAPLAST', 13, Y+3);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  doc.text('Durcaplast · Fabrica de Pinturas · Durcal, Granada · www.durcaplast.com', 42, Y+3);
+
+  var filename = 'presupuesto-' + (document.getElementById('cli-nom').value || 'client').replace(/\s+/g,'-').toLowerCase() + '.pdf';
+  doc.save(filename);
+  showToast('✅ ¡PDF generado!');
+}
+
+function hexToRgb(hex) {
+  var r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return r ? { r:parseInt(r[1],16), g:parseInt(r[2],16), b:parseInt(r[3],16) } : {r:37,g:99,b:235};
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function netejar() {
+  if (!confirm('¿Limpiar todos los datos del presupuesto actual?')) return;
+  document.getElementById('cli-nom').value = '';
+  document.getElementById('cli-adr').value = '';
+  document.getElementById('cli-obs').value = '';
+  var today = new Date().toISOString().split('T')[0];
+  document.getElementById('cli-data').value = today;
+  partides = []; partidaId = 0;
+  afegirPartida();
+  showToast('🗑 Presupuesto limpiado');
+}
+
+function resumenTexto() {
+  var nom = document.getElementById('cli-nom').value || 'Cliente';
+  var adr = document.getElementById('cli-adr').value || '';
+  var fecha = document.getElementById('cli-data').value || '';
+  var obs = document.getElementById('cli-obs').value || '';
+  var pintor = userData ? userData.nom : 'Presupuestador';
+  var lineas = partides.filter(function(p){return p.nom||p.preu;}).map(function(p){
+    return '• ' + (p.nom||'-') + ': ' + (p.cant||0) + ' × ' + (p.preu||0).toFixed(2) + '€ = ' + ((p.cant||0)*(p.preu||0)).toFixed(2) + '€';
+  }).join('\n');
+  var base = document.getElementById('sum-base').textContent;
+  var igic = document.getElementById('sum-iva').textContent;
+  var total = document.getElementById('sum-total').textContent;
+  var igicPct = document.getElementById('iva-sel').value;
+  return '*PRESUPUESTO - ' + pintor + '*' +
+    '\nCliente: ' + nom +
+    (adr ? '\nDirección: ' + adr : '') +
+    (fecha ? '\nFecha: ' + fecha : '') +
+    '\n\n' + lineas +
+    '\n\nBase imponible: ' + base +
+    '\nIVA (' + igicPct + '%): ' + igic +
+    '\n*TOTAL: ' + total + '*' +
+    (obs ? '\n\nNotas: ' + obs : '') +
+    '\n\n_Presentado por Durcaplast · Fábrica de Pinturas · www.durcaplast.com_';
+}
+function enviarWhatsApp() {
+  var texto = resumenTexto();
+  window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+}
+function enviarEmail() {
+  var nom = document.getElementById('cli-nom').value || 'Cliente';
+  var pintor = userData ? userData.nom : 'Presupuestador';
+  var texto = resumenTexto().replace(/\*/g,'');
+  var asunto = 'Presupuesto de ' + pintor + ' para ' + nom;
+  window.location.href = 'mailto:?subject=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(texto);
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+</script>
+<!-- Firebase License Check -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, onValue, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC_PLACEHOLDER_REPLACE_WITH_YOUR_KEY",
+  authDomain: "lance-a99b4.firebaseapp.com",
+  databaseURL: "https://lance-a99b4-default-rtdb.europe-west1.firebasedatabase.io",
+  projectId: "lance-a99b4",
+  storageBucket: "lance-a99b4.appspot.com",
+  messagingSenderId: "000000000000",
+  appId: "1:000000000000:web:000000000000000000"
+};
+
+// ID únic del pintor — s'assigna quan el pintor configura la seva app
+// La consola master busca per nom. Canvia aquest valor pel ID real assignat.
+const PINTOR_ID = localStorage.getItem('pintor_firebase_id') || null;
+
+if (!PINTOR_ID) {
+  // Primer accés: la consola assigna l'ID, o treballem offline
+  // Si no hi ha ID, l'app funciona en mode local
+  console.log('[PintorApp] Modo local — sin ID Firebase asignado');
+} else {
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+  const pintorRef = ref(db, 'pintorapp/pintores/' + PINTOR_ID);
+
+  onValue(pintorRef, function(snap) {
+    var data = snap.val();
+    if (!data) return; // No trobat, continua en mode local
+
+    // Comprova caducitat
+    var expired = false;
+    if (data.caducidad_meses > 0 && data.created_at) {
+      var created = new Date(data.created_at);
+      var expiry  = new Date(created);
+      expiry.setMonth(expiry.getMonth() + data.caducidad_meses);
+      expired = new Date() > expiry;
+    }
+
+    var activo = data.activo !== false && !expired;
+
+    if (!activo) {
+      // Bloqueja l'app
+      var bs = document.getElementById('blocked-screen');
+      bs.style.display = 'flex';
+      if (expired) {
+        document.getElementById('blocked-icon').textContent = '⏰';
+        document.getElementById('blocked-title').textContent = 'Licencia caducada';
+        document.getElementById('blocked-msg').textContent = 'Tu licencia ha caducado. Contacta con Durcaplast · Fábrica de Pinturas para renovarla.';
+      } else {
+        document.getElementById('blocked-icon').textContent = '🔒';
+        document.getElementById('blocked-title').textContent = 'App desactivada';
+        document.getElementById('blocked-msg').textContent = (data.mensaje || 'Contacta con Durcaplast · Fábrica de Pinturas para activar tu app.');
+      }
+      // Oculta l'app
+      document.getElementById('setup-screen').style.display = 'none';
+      document.getElementById('main-app').style.display = 'none';
+    } else {
+      document.getElementById('blocked-screen').style.display = 'none';
+      // Mostra missatge si n'hi ha
+      if (data.mensaje) {
+        var t = document.getElementById('toast');
+        if (t) { t.textContent = '💬 ' + data.mensaje; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 5000); }
+      }
+      // Sincronitza dades del pintor si coincideix
+      if (window.userData && data.nom === window.userData.nom) {
+        // Dades en sincronia
+      }
+    }
+  });
+}
+</script>
+
+<!-- CARTA NCS -->
+<div id="ncs-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);flex-direction:column;">
+  <div style="background:#fff;height:100%;display:flex;flex-direction:column;max-width:500px;margin:0 auto;width:100%;">
+    <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;background:#003d8f;">
+      <span style="font-size:16px;font-weight:700;color:white;">🎨 Carta NCS</span>
+      <button onclick="cerrarNCS()" style="background:rgba(255,255,255,0.2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:15px;color:white;">✕</button>
+    </div>
+    <div style="padding:12px 16px;border-bottom:1px solid #e2e8f0;flex-shrink:0;">
+      <input id="ncs-search" type="text" placeholder="🔍 Buscar color o código NCS..." autocapitalize="none"
+        style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;background:#f8fafc;box-sizing:border-box;"
+        oninput="filtrarNCS(this.value)">
+    </div>
+    <div id="ncs-familias" style="padding:8px 16px;border-bottom:1px solid #e2e8f0;flex-shrink:0;overflow-x:auto;white-space:nowrap;display:flex;gap:8px;"></div>
+    <div id="ncs-lista" style="flex:1;overflow-y:auto;padding:8px 0;"></div>
+    <div style="padding:10px 16px;background:#f8fafc;border-top:1px solid #e2e8f0;flex-shrink:0;font-size:11px;color:#94a3b8;text-align:center;">
+      NCS® Natural Colour System · 103 colores más usados en pintura
+    </div>
+  </div>
+</div>
+<script>
+var NCS_DATA = [{"codigo": "S 0502-Y", "nombre": "Blanco Roto", "familia": "Blancos y Grises", "hex": "#F5F3EF"}, {"codigo": "S 0500-N", "nombre": "Blanco Puro", "familia": "Blancos y Grises", "hex": "#F4F4F4"}, {"codigo": "S 0502-B", "nombre": "Blanco Azulado", "familia": "Blancos y Grises", "hex": "#EFF2F4"}, {"codigo": "S 0502-G", "nombre": "Blanco Verdoso", "familia": "Blancos y Grises", "hex": "#EFF4F1"}, {"codigo": "S 0502-R", "nombre": "Blanco Rosado", "familia": "Blancos y Grises", "hex": "#F5EFEF"}, {"codigo": "S 1000-N", "nombre": "Gris Muy Claro", "familia": "Blancos y Grises", "hex": "#E8E8E8"}, {"codigo": "S 1500-N", "nombre": "Gris Claro", "familia": "Blancos y Grises", "hex": "#D9D9D9"}, {"codigo": "S 2000-N", "nombre": "Gris Suave", "familia": "Blancos y Grises", "hex": "#CCCCCC"}, {"codigo": "S 2500-N", "nombre": "Gris Medio", "familia": "Blancos y Grises", "hex": "#BEBEBE"}, {"codigo": "S 3000-N", "nombre": "Gris", "familia": "Blancos y Grises", "hex": "#B0B0B0"}, {"codigo": "S 3500-N", "nombre": "Gris Oscuro", "familia": "Blancos y Grises", "hex": "#A2A2A2"}, {"codigo": "S 4000-N", "nombre": "Gris Medio Oscuro", "familia": "Blancos y Grises", "hex": "#939393"}, {"codigo": "S 4500-N", "nombre": "Gris Carbón Suave", "familia": "Blancos y Grises", "hex": "#858585"}, {"codigo": "S 5000-N", "nombre": "Gris Carbón", "familia": "Blancos y Grises", "hex": "#777777"}, {"codigo": "S 6000-N", "nombre": "Gris Muy Oscuro", "familia": "Blancos y Grises", "hex": "#5A5A5A"}, {"codigo": "S 7000-N", "nombre": "Gris Casi Negro", "familia": "Blancos y Grises", "hex": "#3E3E3E"}, {"codigo": "S 8000-N", "nombre": "Negro Suave", "familia": "Blancos y Grises", "hex": "#222222"}, {"codigo": "S 9000-N", "nombre": "Negro", "familia": "Blancos y Grises", "hex": "#0A0A0A"}, {"codigo": "S 0804-Y20R", "nombre": "Blanco Crema", "familia": "Beiges y Tierras", "hex": "#F5EFE0"}, {"codigo": "S 1005-Y20R", "nombre": "Crema Muy Claro", "familia": "Beiges y Tierras", "hex": "#F0E6CC"}, {"codigo": "S 1510-Y10R", "nombre": "Crema Claro", "familia": "Beiges y Tierras", "hex": "#EDDFB8"}, {"codigo": "S 1510-Y20R", "nombre": "Beige Claro", "familia": "Beiges y Tierras", "hex": "#ECDDB0"}, {"codigo": "S 2010-Y10R", "nombre": "Beige", "familia": "Beiges y Tierras", "hex": "#E0CC95"}, {"codigo": "S 2020-Y20R", "nombre": "Beige Cálido", "familia": "Beiges y Tierras", "hex": "#DCC27A"}, {"codigo": "S 2030-Y20R", "nombre": "Beige Dorado", "familia": "Beiges y Tierras", "hex": "#D9B85C"}, {"codigo": "S 3010-Y10R", "nombre": "Paja Oscuro", "familia": "Beiges y Tierras", "hex": "#C9AA72"}, {"codigo": "S 3020-Y20R", "nombre": "Ocre Claro", "familia": "Beiges y Tierras", "hex": "#C49A50"}, {"codigo": "S 4020-Y20R", "nombre": "Ocre", "familia": "Beiges y Tierras", "hex": "#B08030"}, {"codigo": "S 4030-Y30R", "nombre": "Ocre Naranja", "familia": "Beiges y Tierras", "hex": "#B07020"}, {"codigo": "S 5020-Y20R", "nombre": "Tierra Cálida", "familia": "Beiges y Tierras", "hex": "#8A6020"}, {"codigo": "S 5030-Y30R", "nombre": "Marrón Claro", "familia": "Beiges y Tierras", "hex": "#885015"}, {"codigo": "S 6020-Y30R", "nombre": "Marrón", "familia": "Beiges y Tierras", "hex": "#6E4010"}, {"codigo": "S 7020-Y30R", "nombre": "Marrón Oscuro", "familia": "Beiges y Tierras", "hex": "#543010"}, {"codigo": "S 1510-Y50R", "nombre": "Rosa Beige", "familia": "Beiges y Tierras", "hex": "#EEDBB8"}, {"codigo": "S 2010-Y50R", "nombre": "Salmón Claro", "familia": "Beiges y Tierras", "hex": "#E4C09A"}, {"codigo": "S 3010-Y50R", "nombre": "Teja Claro", "familia": "Beiges y Tierras", "hex": "#C89870"}, {"codigo": "S 4020-Y50R", "nombre": "Teja", "familia": "Beiges y Tierras", "hex": "#B07848"}, {"codigo": "S 5030-Y50R", "nombre": "Terracota", "familia": "Beiges y Tierras", "hex": "#9A5828"}, {"codigo": "S 6030-Y50R", "nombre": "Terracota Oscuro", "familia": "Beiges y Tierras", "hex": "#7A3818"}, {"codigo": "S 0530-Y", "nombre": "Amarillo Muy Claro", "familia": "Amarillos", "hex": "#F5E060"}, {"codigo": "S 0550-Y", "nombre": "Amarillo", "familia": "Amarillos", "hex": "#F5D800"}, {"codigo": "S 1040-Y", "nombre": "Amarillo Medio", "familia": "Amarillos", "hex": "#E8C800"}, {"codigo": "S 1060-Y", "nombre": "Amarillo Intenso", "familia": "Amarillos", "hex": "#E8C000"}, {"codigo": "S 2040-Y", "nombre": "Amarillo Cálido", "familia": "Amarillos", "hex": "#D8AA00"}, {"codigo": "S 2060-Y10R", "nombre": "Amarillo Dorado", "familia": "Amarillos", "hex": "#D89800"}, {"codigo": "S 3050-Y10R", "nombre": "Dorado", "familia": "Amarillos", "hex": "#C07800"}, {"codigo": "S 0550-Y30R", "nombre": "Melocotón", "familia": "Naranjas", "hex": "#F8C060"}, {"codigo": "S 1040-Y30R", "nombre": "Albaricoque", "familia": "Naranjas", "hex": "#F0A840"}, {"codigo": "S 1060-Y30R", "nombre": "Naranja Claro", "familia": "Naranjas", "hex": "#F09020"}, {"codigo": "S 2050-Y40R", "nombre": "Naranja", "familia": "Naranjas", "hex": "#E07010"}, {"codigo": "S 3050-Y50R", "nombre": "Naranja Oscuro", "familia": "Naranjas", "hex": "#C85800"}, {"codigo": "S 4050-Y50R", "nombre": "Naranja Quemado", "familia": "Naranjas", "hex": "#A04000"}, {"codigo": "S 0560-Y80R", "nombre": "Coral Claro", "familia": "Rojos", "hex": "#F08080"}, {"codigo": "S 1050-Y80R", "nombre": "Coral", "familia": "Rojos", "hex": "#E05858"}, {"codigo": "S 1060-R", "nombre": "Rojo Claro", "familia": "Rojos", "hex": "#D83030"}, {"codigo": "S 1070-R", "nombre": "Rojo", "familia": "Rojos", "hex": "#D01010"}, {"codigo": "S 2060-R", "nombre": "Rojo Carmín", "familia": "Rojos", "hex": "#B80000"}, {"codigo": "S 3060-R", "nombre": "Rojo Oscuro", "familia": "Rojos", "hex": "#980000"}, {"codigo": "S 4050-R", "nombre": "Granate", "familia": "Rojos", "hex": "#780000"}, {"codigo": "S 5040-R", "nombre": "Granate Oscuro", "familia": "Rojos", "hex": "#580000"}, {"codigo": "S 2030-R", "nombre": "Rosa Suave", "familia": "Rojos", "hex": "#E8A0A0"}, {"codigo": "S 1020-R10B", "nombre": "Rosa Claro", "familia": "Rojos", "hex": "#F0C0C0"}, {"codigo": "S 2020-R20B", "nombre": "Rosa Malva", "familia": "Rojos", "hex": "#E0A0B8"}, {"codigo": "S 0530-R80B", "nombre": "Azul Hielo", "familia": "Azules", "hex": "#C8DCF0"}, {"codigo": "S 1010-R80B", "nombre": "Azul Muy Claro", "familia": "Azules", "hex": "#B8D0E8"}, {"codigo": "S 1020-R80B", "nombre": "Azul Cielo", "familia": "Azules", "hex": "#A0C4E0"}, {"codigo": "S 2020-R80B", "nombre": "Azul Suave", "familia": "Azules", "hex": "#80A8D0"}, {"codigo": "S 2030-B", "nombre": "Azul Acero", "familia": "Azules", "hex": "#6898C8"}, {"codigo": "S 3030-B", "nombre": "Azul Medio", "familia": "Azules", "hex": "#4878A8"}, {"codigo": "S 3040-R80B", "nombre": "Azul Real", "familia": "Azules", "hex": "#2060A0"}, {"codigo": "S 4040-R80B", "nombre": "Azul Intenso", "familia": "Azules", "hex": "#0048A0"}, {"codigo": "S 4055-R80B", "nombre": "Azul Marino Claro", "familia": "Azules", "hex": "#003890"}, {"codigo": "S 5040-R80B", "nombre": "Azul Marino", "familia": "Azules", "hex": "#003070"}, {"codigo": "S 6030-R80B", "nombre": "Azul Marino Oscuro", "familia": "Azules", "hex": "#002050"}, {"codigo": "S 3040-B", "nombre": "Azul Francia", "familia": "Azules", "hex": "#1060B0"}, {"codigo": "S 2030-B30G", "nombre": "Azul Turquesa Claro", "familia": "Azules", "hex": "#5090A8"}, {"codigo": "S 3030-B30G", "nombre": "Azul Turquesa", "familia": "Azules", "hex": "#208888"}, {"codigo": "S 3040-B40G", "nombre": "Turquesa", "familia": "Azules", "hex": "#108080"}, {"codigo": "S 4040-B40G", "nombre": "Turquesa Oscuro", "familia": "Azules", "hex": "#006868"}, {"codigo": "S 0520-G", "nombre": "Verde Muy Claro", "familia": "Verdes", "hex": "#C8E8C8"}, {"codigo": "S 1020-G", "nombre": "Verde Menta", "familia": "Verdes", "hex": "#A0D4A0"}, {"codigo": "S 2020-G", "nombre": "Verde Salvia", "familia": "Verdes", "hex": "#78B878"}, {"codigo": "S 2030-G", "nombre": "Verde Suave", "familia": "Verdes", "hex": "#60B060"}, {"codigo": "S 3030-G", "nombre": "Verde", "familia": "Verdes", "hex": "#409840"}, {"codigo": "S 4030-G", "nombre": "Verde Medio", "familia": "Verdes", "hex": "#287828"}, {"codigo": "S 4040-G", "nombre": "Verde Jardín", "familia": "Verdes", "hex": "#106010"}, {"codigo": "S 5030-G", "nombre": "Verde Oscuro", "familia": "Verdes", "hex": "#085008"}, {"codigo": "S 6020-G", "nombre": "Verde Botella", "familia": "Verdes", "hex": "#003800"}, {"codigo": "S 2020-G40Y", "nombre": "Verde Lima Suave", "familia": "Verdes", "hex": "#B0D070"}, {"codigo": "S 3030-G40Y", "nombre": "Verde Lima", "familia": "Verdes", "hex": "#90B840"}, {"codigo": "S 3040-G10Y", "nombre": "Verde Oliva", "familia": "Verdes", "hex": "#708840"}, {"codigo": "S 4030-G10Y", "nombre": "Verde Oliva Oscuro", "familia": "Verdes", "hex": "#587030"}, {"codigo": "S 5020-G30Y", "nombre": "Verde Caqui", "familia": "Verdes", "hex": "#506030"}, {"codigo": "S 6020-G30Y", "nombre": "Verde Caqui Oscuro", "familia": "Verdes", "hex": "#384820"}, {"codigo": "S 1020-R50B", "nombre": "Lila Muy Claro", "familia": "Violetas", "hex": "#E8C0E0"}, {"codigo": "S 2020-R50B", "nombre": "Lila", "familia": "Violetas", "hex": "#D090C0"}, {"codigo": "S 3030-R50B", "nombre": "Malva", "familia": "Violetas", "hex": "#B068A8"}, {"codigo": "S 3040-R60B", "nombre": "Violeta Claro", "familia": "Violetas", "hex": "#9848A8"}, {"codigo": "S 4040-R60B", "nombre": "Violeta", "familia": "Violetas", "hex": "#783088"}, {"codigo": "S 5030-R60B", "nombre": "Violeta Oscuro", "familia": "Violetas", "hex": "#581870"}, {"codigo": "S 4030-R70B", "nombre": "Púrpura", "familia": "Violetas", "hex": "#602880"}, {"codigo": "S 5030-R70B", "nombre": "Púrpura Oscuro", "familia": "Violetas", "hex": "#481870"}, {"codigo": "S 6020-R60B", "nombre": "Berenjena", "familia": "Violetas", "hex": "#380050"}];
+var ncsFamiliaActiva = 'Todos';
+function abrirCartaNCS() {
+  document.getElementById('ncs-modal').style.display='flex';
+  ncsFamiliaActiva='Todos'; renderFamiliasNCS(); renderListaNCS(NCS_DATA);
+  document.getElementById('ncs-search').value='';
+}
+function cerrarNCS() { document.getElementById('ncs-modal').style.display='none'; }
+function renderFamiliasNCS() {
+  var cont=document.getElementById('ncs-familias'), familias=['Todos'];
+  NCS_DATA.forEach(function(c){ if(familias.indexOf(c.familia)===-1) familias.push(c.familia); });
+  cont.innerHTML='';
+  familias.forEach(function(f) {
+    var btn=document.createElement('button');
+    btn.textContent=f;
+    btn.style.cssText='padding:5px 12px;border-radius:20px;border:1.5px solid '+(f===ncsFamiliaActiva?'#2d7a2d':'#e2e8f0')+';background:'+(f===ncsFamiliaActiva?'#2d7a2d':'white')+';color:'+(f===ncsFamiliaActiva?'white':'#374151')+';font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:"DM Sans",sans-serif;';
+    btn.addEventListener('click',function(){ ncsFamiliaActiva=f; renderFamiliasNCS(); filtrarNCS(document.getElementById('ncs-search').value); });
+    cont.appendChild(btn);
+  });
+}
+function filtrarNCS(busca) {
+  busca=busca.toLowerCase().trim();
+  renderListaNCS(NCS_DATA.filter(function(c){
+    return (ncsFamiliaActiva==='Todos'||c.familia===ncsFamiliaActiva) && (!busca||c.codigo.toLowerCase().includes(busca)||c.nombre.toLowerCase().includes(busca));
+  }));
+}
+function renderListaNCS(lista) {
+  var cont=document.getElementById('ncs-lista'); cont.innerHTML='';
+  if(!lista.length){ cont.innerHTML='<div style="text-align:center;padding:40px;color:#94a3b8;">No se encontraron colores</div>'; return; }
+  lista.forEach(function(color) {
+    var item=document.createElement('div');
+    item.style.cssText='padding:10px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;border-bottom:1px solid #f8fafc;';
+    var muestra=document.createElement('div');
+    muestra.style.cssText='width:44px;height:44px;border-radius:10px;background:'+color.hex+';flex-shrink:0;border:1px solid rgba(0,0,0,0.1);';
+    var info=document.createElement('div'); info.style.cssText='flex:1;min-width:0;';
+    info.innerHTML='<div style="font-size:14px;font-weight:600;color:#0f172a;">'+color.nombre+'</div><div style="font-size:11px;color:#94a3b8;font-family:monospace;">'+color.codigo+'</div><div style="font-size:11px;color:#64748b;">'+color.familia+' · '+color.hex.toUpperCase()+'</div>';
+    var btnC=document.createElement('button');
+    btnC.style.cssText='background:#f1f5f9;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;color:#003d8f;cursor:pointer;flex-shrink:0;';
+    btnC.textContent='Copiar';
+    btnC.addEventListener('click',function(e){ e.stopPropagation(); if(navigator.clipboard) navigator.clipboard.writeText(color.codigo+' · '+color.nombre); showToast('📋 '+color.codigo+' copiado'); });
+    item.appendChild(muestra); item.appendChild(info); item.appendChild(btnC);
+    item.addEventListener('click',function(){ if(navigator.clipboard) navigator.clipboard.writeText(color.codigo+' · '+color.nombre); showToast('🎨 '+color.codigo+' · '+color.nombre); cerrarNCS(); });
+    item.addEventListener('mouseover',function(){ item.style.background='#f0f9ff'; });
+    item.addEventListener('mouseout',function(){ item.style.background=''; });
+    cont.appendChild(item);
+  });
+}
+
+// ── MAYÚSCULAS GLOBALES ──────────────────────────────────────────────────────
+document.addEventListener('input', function(e) {
+  var el=e.target;
+  if(el.tagName!=='INPUT'&&el.tagName!=='TEXTAREA') return;
+  if(el.type==='number'||el.type==='date'||el.type==='tel') return;
+  if(el.id==='activation-code'||el.id==='ncs-search') return;
+  var val=el.value, pos=el.selectionStart;
+  var nuevo=val.replace(/(^|\s)(\S)/g,function(m,s,l){ return s+l.toUpperCase(); });
+  if(nuevo!==val){ el.value=nuevo; try{el.setSelectionRange(pos,pos);}catch(e){} }
+});
+</script>
+
+
+<!-- CARTA RAL -->
+<div id="ral-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);flex-direction:column;">
+  <div style="background:#fff;height:100%;display:flex;flex-direction:column;max-width:500px;margin:0 auto;width:100%;">
+    <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;background:#c0392b;">
+      <span style="font-size:16px;font-weight:700;color:white;">🎨 Carta RAL</span>
+      <button onclick="cerrarRAL()" style="background:rgba(255,255,255,0.2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:15px;color:white;">✕</button>
+    </div>
+    <div style="padding:12px 16px;border-bottom:1px solid #e2e8f0;flex-shrink:0;">
+      <input id="ral-search" type="text" placeholder="🔍 Buscar color o código RAL..." autocapitalize="none"
+        style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;background:#f8fafc;box-sizing:border-box;"
+        oninput="filtrarRAL(this.value)">
+    </div>
+    <div id="ral-familias" style="padding:8px 16px;border-bottom:1px solid #e2e8f0;flex-shrink:0;overflow-x:auto;white-space:nowrap;display:flex;gap:8px;"></div>
+    <div id="ral-lista" style="flex:1;overflow-y:auto;padding:8px 0;"></div>
+    <div style="padding:10px 16px;background:#f8fafc;border-top:1px solid #e2e8f0;flex-shrink:0;font-size:11px;color:#94a3b8;text-align:center;">
+      RAL Classic · 84 colores más usados en pintura y construcción
+    </div>
+  </div>
+</div>
+<script>
+var RAL_DATA = [{"codigo": "RAL 9010", "nombre": "Blanco Puro", "familia": "Blancos y Grises", "hex": "#F4F4F4"}, {"codigo": "RAL 9016", "nombre": "Blanco Tráfico", "familia": "Blancos y Grises", "hex": "#F1F0EB"}, {"codigo": "RAL 9003", "nombre": "Blanco Señales", "familia": "Blancos y Grises", "hex": "#ECECE7"}, {"codigo": "RAL 9001", "nombre": "Blanco Crema", "familia": "Blancos y Grises", "hex": "#FDF4E3"}, {"codigo": "RAL 9002", "nombre": "Blanco Grisáceo", "familia": "Blancos y Grises", "hex": "#E7EBDA"}, {"codigo": "RAL 7035", "nombre": "Gris Claro", "familia": "Blancos y Grises", "hex": "#CBD0CC"}, {"codigo": "RAL 7016", "nombre": "Gris Antracita", "familia": "Blancos y Grises", "hex": "#383E42"}, {"codigo": "RAL 7021", "nombre": "Gris Negro", "familia": "Blancos y Grises", "hex": "#2B2B2C"}, {"codigo": "RAL 7015", "nombre": "Gris Pizarra", "familia": "Blancos y Grises", "hex": "#4F5358"}, {"codigo": "RAL 7030", "nombre": "Gris Piedra", "familia": "Blancos y Grises", "hex": "#8B8C7A"}, {"codigo": "RAL 7037", "nombre": "Gris Polvo", "familia": "Blancos y Grises", "hex": "#7D7F7D"}, {"codigo": "RAL 7040", "nombre": "Gris Ventana", "familia": "Blancos y Grises", "hex": "#9DA3A6"}, {"codigo": "RAL 9005", "nombre": "Negro Intenso", "familia": "Blancos y Grises", "hex": "#0A0A0A"}, {"codigo": "RAL 9006", "nombre": "Aluminio Blanco", "familia": "Blancos y Grises", "hex": "#A5A5A5"}, {"codigo": "RAL 9007", "nombre": "Aluminio Gris", "familia": "Blancos y Grises", "hex": "#8F8F8F"}, {"codigo": "RAL 1013", "nombre": "Blanco Perla", "familia": "Beiges y Marrones", "hex": "#E9E0D2"}, {"codigo": "RAL 1014", "nombre": "Marfil", "familia": "Beiges y Marrones", "hex": "#DFD0A8"}, {"codigo": "RAL 1015", "nombre": "Marfil Claro", "familia": "Beiges y Marrones", "hex": "#E6D690"}, {"codigo": "RAL 1019", "nombre": "Beige Grisáceo", "familia": "Beiges y Marrones", "hex": "#9E9068"}, {"codigo": "RAL 1001", "nombre": "Beige", "familia": "Beiges y Marrones", "hex": "#CDA882"}, {"codigo": "RAL 1002", "nombre": "Amarillo Arena", "familia": "Beiges y Marrones", "hex": "#D6AE6C"}, {"codigo": "RAL 8001", "nombre": "Marrón Ocre", "familia": "Beiges y Marrones", "hex": "#9C6B30"}, {"codigo": "RAL 8011", "nombre": "Marrón Nuez", "familia": "Beiges y Marrones", "hex": "#6E3B2A"}, {"codigo": "RAL 8014", "nombre": "Marrón Sepia", "familia": "Beiges y Marrones", "hex": "#4B3325"}, {"codigo": "RAL 8017", "nombre": "Marrón Chocolate", "familia": "Beiges y Marrones", "hex": "#45322E"}, {"codigo": "RAL 8019", "nombre": "Gris Pardo", "familia": "Beiges y Marrones", "hex": "#403A3A"}, {"codigo": "RAL 8022", "nombre": "Negro Pardo", "familia": "Beiges y Marrones", "hex": "#1A1718"}, {"codigo": "RAL 8024", "nombre": "Marrón Beige", "familia": "Beiges y Marrones", "hex": "#7B5141"}, {"codigo": "RAL 8025", "nombre": "Marrón Pálido", "familia": "Beiges y Marrones", "hex": "#755C48"}, {"codigo": "RAL 1003", "nombre": "Amarillo Señales", "familia": "Amarillos", "hex": "#F7A600"}, {"codigo": "RAL 1004", "nombre": "Amarillo Oro", "familia": "Amarillos", "hex": "#E49E00"}, {"codigo": "RAL 1007", "nombre": "Amarillo Narciso", "familia": "Amarillos", "hex": "#E88C00"}, {"codigo": "RAL 1021", "nombre": "Amarillo Colza", "familia": "Amarillos", "hex": "#F0B400"}, {"codigo": "RAL 1023", "nombre": "Amarillo Tráfico", "familia": "Amarillos", "hex": "#F5A300"}, {"codigo": "RAL 1028", "nombre": "Amarillo Melón", "familia": "Amarillos", "hex": "#FF9B00"}, {"codigo": "RAL 2003", "nombre": "Naranja Pastel", "familia": "Naranjas y Rojos", "hex": "#FF7514"}, {"codigo": "RAL 2004", "nombre": "Naranja Puro", "familia": "Naranjas y Rojos", "hex": "#F44611"}, {"codigo": "RAL 2008", "nombre": "Naranja Claro", "familia": "Naranjas y Rojos", "hex": "#F3752B"}, {"codigo": "RAL 2011", "nombre": "Naranja Intenso", "familia": "Naranjas y Rojos", "hex": "#EC7C26"}, {"codigo": "RAL 3000", "nombre": "Rojo Vivo", "familia": "Naranjas y Rojos", "hex": "#AB2524"}, {"codigo": "RAL 3001", "nombre": "Rojo Señales", "familia": "Naranjas y Rojos", "hex": "#A52019"}, {"codigo": "RAL 3002", "nombre": "Rojo Carmín", "familia": "Naranjas y Rojos", "hex": "#A2231D"}, {"codigo": "RAL 3003", "nombre": "Rojo Rubí", "familia": "Naranjas y Rojos", "hex": "#9B111E"}, {"codigo": "RAL 3005", "nombre": "Rojo Vino", "familia": "Naranjas y Rojos", "hex": "#5E2028"}, {"codigo": "RAL 3009", "nombre": "Rojo Óxido", "familia": "Naranjas y Rojos", "hex": "#6D3628"}, {"codigo": "RAL 3013", "nombre": "Rojo Tomate", "familia": "Naranjas y Rojos", "hex": "#9E2A2B"}, {"codigo": "RAL 3016", "nombre": "Rojo Coral", "familia": "Naranjas y Rojos", "hex": "#AC4034"}, {"codigo": "RAL 3020", "nombre": "Rojo Tráfico", "familia": "Naranjas y Rojos", "hex": "#CC0605"}, {"codigo": "RAL 5002", "nombre": "Azul Ultramar", "familia": "Azules", "hex": "#20214F"}, {"codigo": "RAL 5003", "nombre": "Azul Zafiro", "familia": "Azules", "hex": "#1D2A57"}, {"codigo": "RAL 5005", "nombre": "Azul Señales", "familia": "Azules", "hex": "#154889"}, {"codigo": "RAL 5009", "nombre": "Azul Azure", "familia": "Azules", "hex": "#1A5784"}, {"codigo": "RAL 5010", "nombre": "Azul Genciana", "familia": "Azules", "hex": "#0E4C96"}, {"codigo": "RAL 5012", "nombre": "Azul Claro", "familia": "Azules", "hex": "#3B83BD"}, {"codigo": "RAL 5013", "nombre": "Azul Cobalto", "familia": "Azules", "hex": "#232C60"}, {"codigo": "RAL 5015", "nombre": "Azul Cielo", "familia": "Azules", "hex": "#1B5EA6"}, {"codigo": "RAL 5017", "nombre": "Azul Tráfico", "familia": "Azules", "hex": "#0A5E9E"}, {"codigo": "RAL 5018", "nombre": "Azul Turquesa", "familia": "Azules", "hex": "#219FBC"}, {"codigo": "RAL 5019", "nombre": "Azul Capri", "familia": "Azules", "hex": "#1D5B83"}, {"codigo": "RAL 5021", "nombre": "Azul Agua", "familia": "Azules", "hex": "#068490"}, {"codigo": "RAL 5023", "nombre": "Azul Distante", "familia": "Azules", "hex": "#4D6F8C"}, {"codigo": "RAL 5024", "nombre": "Azul Pastel", "familia": "Azules", "hex": "#6A8FA7"}, {"codigo": "RAL 6002", "nombre": "Verde Hoja", "familia": "Verdes", "hex": "#325928"}, {"codigo": "RAL 6005", "nombre": "Verde Musgo", "familia": "Verdes", "hex": "#2F4538"}, {"codigo": "RAL 6007", "nombre": "Verde Botella", "familia": "Verdes", "hex": "#2F3D2B"}, {"codigo": "RAL 6009", "nombre": "Verde Abeto", "familia": "Verdes", "hex": "#27352A"}, {"codigo": "RAL 6010", "nombre": "Verde Hierba", "familia": "Verdes", "hex": "#4D7840"}, {"codigo": "RAL 6011", "nombre": "Verde Reseda", "familia": "Verdes", "hex": "#64713E"}, {"codigo": "RAL 6013", "nombre": "Verde Caña", "familia": "Verdes", "hex": "#7C7B4B"}, {"codigo": "RAL 6018", "nombre": "Verde Amarillo", "familia": "Verdes", "hex": "#4C9141"}, {"codigo": "RAL 6019", "nombre": "Verde Blanco", "familia": "Verdes", "hex": "#B4CA8A"}, {"codigo": "RAL 6024", "nombre": "Verde Tráfico", "familia": "Verdes", "hex": "#308446"}, {"codigo": "RAL 6025", "nombre": "Verde Helecho", "familia": "Verdes", "hex": "#4E6B3F"}, {"codigo": "RAL 6029", "nombre": "Verde Menta", "familia": "Verdes", "hex": "#006F3C"}, {"codigo": "RAL 6034", "nombre": "Verde Turquesa", "familia": "Verdes", "hex": "#6AADA8"}, {"codigo": "RAL 4001", "nombre": "Lila Rojo", "familia": "Violetas y Rosas", "hex": "#8B638A"}, {"codigo": "RAL 4002", "nombre": "Rojo Violeta", "familia": "Violetas y Rosas", "hex": "#8F4E35"}, {"codigo": "RAL 4003", "nombre": "Rosa Erica", "familia": "Violetas y Rosas", "hex": "#CB6D8E"}, {"codigo": "RAL 4004", "nombre": "Violeta Burdeos", "familia": "Violetas y Rosas", "hex": "#6D1F3E"}, {"codigo": "RAL 4005", "nombre": "Lila Azul", "familia": "Violetas y Rosas", "hex": "#6C6BA0"}, {"codigo": "RAL 4006", "nombre": "Violeta Tráfico", "familia": "Violetas y Rosas", "hex": "#A03472"}, {"codigo": "RAL 4007", "nombre": "Violeta Púrpura", "familia": "Violetas y Rosas", "hex": "#4A2039"}, {"codigo": "RAL 4008", "nombre": "Violeta Señales", "familia": "Violetas y Rosas", "hex": "#844685"}, {"codigo": "RAL 4009", "nombre": "Rosa Pastel", "familia": "Violetas y Rosas", "hex": "#A9809A"}];
+var ralFamiliaActiva = 'Todos';
+function abrirCartaRAL() {
+  document.getElementById('ral-modal').style.display='flex';
+  ralFamiliaActiva='Todos'; renderFamiliasRAL(); renderListaRAL(RAL_DATA);
+  document.getElementById('ral-search').value='';
+}
+function cerrarRAL() { document.getElementById('ral-modal').style.display='none'; }
+function renderFamiliasRAL() {
+  var cont=document.getElementById('ral-familias'), familias=['Todos'];
+  RAL_DATA.forEach(function(c){ if(familias.indexOf(c.familia)===-1) familias.push(c.familia); });
+  cont.innerHTML='';
+  familias.forEach(function(f) {
+    var btn=document.createElement('button');
+    btn.textContent=f;
+    btn.style.cssText='padding:5px 12px;border-radius:20px;border:1.5px solid '+(f===ralFamiliaActiva?'#c0392b':'#e2e8f0')+';background:'+(f===ralFamiliaActiva?'#c0392b':'white')+';color:'+(f===ralFamiliaActiva?'white':'#374151')+';font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:"DM Sans",sans-serif;';
+    btn.addEventListener('click',function(){ ralFamiliaActiva=f; renderFamiliasRAL(); filtrarRAL(document.getElementById('ral-search').value); });
+    cont.appendChild(btn);
+  });
+}
+function filtrarRAL(busca) {
+  busca=busca.toLowerCase().trim();
+  renderListaRAL(RAL_DATA.filter(function(c){
+    return (ralFamiliaActiva==='Todos'||c.familia===ralFamiliaActiva) && (!busca||c.codigo.toLowerCase().includes(busca)||c.nombre.toLowerCase().includes(busca));
+  }));
+}
+function renderListaRAL(lista) {
+  var cont=document.getElementById('ral-lista'); cont.innerHTML='';
+  if(!lista.length){ cont.innerHTML='<div style="text-align:center;padding:40px;color:#94a3b8;">No se encontraron colores</div>'; return; }
+  lista.forEach(function(color) {
+    var item=document.createElement('div');
+    item.style.cssText='padding:10px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;border-bottom:1px solid #f8fafc;';
+    var muestra=document.createElement('div');
+    muestra.style.cssText='width:44px;height:44px;border-radius:10px;background:'+color.hex+';flex-shrink:0;border:1px solid rgba(0,0,0,0.1);';
+    var info=document.createElement('div'); info.style.cssText='flex:1;min-width:0;';
+    info.innerHTML='<div style="font-size:14px;font-weight:600;color:#0f172a;">'+color.nombre+'</div><div style="font-size:11px;color:#94a3b8;font-family:monospace;">'+color.codigo+'</div><div style="font-size:11px;color:#64748b;">'+color.familia+' · '+color.hex.toUpperCase()+'</div>';
+    var btnC=document.createElement('button');
+    btnC.style.cssText='background:#fff0f0;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;color:#c0392b;cursor:pointer;flex-shrink:0;';
+    btnC.textContent='Copiar';
+    btnC.addEventListener('click',function(e){ e.stopPropagation(); if(navigator.clipboard) navigator.clipboard.writeText(color.codigo+' · '+color.nombre); showToast('📋 '+color.codigo+' copiado'); });
+    item.appendChild(muestra); item.appendChild(info); item.appendChild(btnC);
+    item.addEventListener('click',function(){ if(navigator.clipboard) navigator.clipboard.writeText(color.codigo+' · '+color.nombre); showToast('🎨 '+color.codigo+' · '+color.nombre); cerrarRAL(); });
+    item.addEventListener('mouseover',function(){ item.style.background='#fff5f5'; });
+    item.addEventListener('mouseout',function(){ item.style.background=''; });
+    cont.appendChild(item);
+  });
+}
+</script>
+
+
+<script>
+// ── PWA INSTALL ──────────────────────────────────────────────────────────────
+var deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('pwa-install-bar').style.display = 'block';
+});
+function instalarPWA() {
+  if (!deferredPrompt) {
+    showToast('📲 Abre el menú del navegador → Añadir a pantalla de inicio');
+    return;
+  }
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(result) {
+    if (result.outcome === 'accepted') {
+      showToast('✅ ¡App instalada!');
+      document.getElementById('pwa-install-bar').style.display = 'none';
+    }
+    deferredPrompt = null;
+  });
+}
+window.addEventListener('appinstalled', function() {
+  document.getElementById('pwa-install-bar').style.display = 'none';
+  showToast('✅ ¡DurcaplastApp instalada!');
+});
+</script>
+
+
+<!-- CARTA DURCAPLAST -->
+<div id="durc-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);flex-direction:column;"><div style="background:#fff;height:100%;display:flex;flex-direction:column;max-width:500px;margin:0 auto;width:100%;"><div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;background:#2d7a2d;"><div style="display:flex;align-items:center;gap:10px;"><img src="https://www.durcaplast.com/wp-content/uploads/2019/01/logo-durcaplast.png" style="height:30px;border-radius:4px;background:white;padding:2px;"><span style="font-size:15px;font-weight:700;color:white;">Carta de Colores</span></div><button onclick="cerrarDurc()" style="background:rgba(255,255,255,0.2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:15px;color:white;">&#x2715;</button></div><div style="padding:12px 16px;border-bottom:1px solid #e2e8f0;"><input id="durc-search" type="text" placeholder="Buscar color Durcaplast..." autocapitalize="none" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;background:#f8fafc;box-sizing:border-box;" oninput="filtrarDurc(this.value)"></div><div id="durc-familias" style="padding:8px 16px;border-bottom:1px solid #e2e8f0;overflow-x:auto;white-space:nowrap;display:flex;gap:8px;"></div><div id="durc-lista" style="flex:1;overflow-y:auto;padding:8px 0;"></div><div style="padding:10px 16px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center;">Durcaplast · 44 colores · Fabrica de Pinturas desde 1990</div></div></div><script>
+var DURC_DATA=[{"codigo": "D-01", "nombre": "Blanco Puro", "gama": "Blancos", "hex": "#F5F5F5", "producto": "Plástica Interior/Exterior"}, {"codigo": "D-02", "nombre": "Blanco Hueso", "gama": "Blancos", "hex": "#F2EFE4", "producto": "Plástica Interior/Exterior"}, {"codigo": "D-03", "nombre": "Blanco Roto", "gama": "Blancos", "hex": "#EDE9DC", "producto": "Fachadas"}, {"codigo": "D-04", "nombre": "Blanco Nácar", "gama": "Blancos", "hex": "#F0EDE5", "producto": "Plástica Interior"}, {"codigo": "D-10", "nombre": "Crema", "gama": "Beiges", "hex": "#F0E0B0", "producto": "Fachadas"}, {"codigo": "D-11", "nombre": "Beige Claro", "gama": "Beiges", "hex": "#E8D5A0", "producto": "Fachadas"}, {"codigo": "D-12", "nombre": "Albero", "gama": "Beiges", "hex": "#D4B870", "producto": "Fachadas"}, {"codigo": "D-13", "nombre": "Arena", "gama": "Beiges", "hex": "#C8A85A", "producto": "Fachadas"}, {"codigo": "D-14", "nombre": "Vainilla", "gama": "Beiges", "hex": "#EED898", "producto": "Plástica Interior"}, {"codigo": "D-15", "nombre": "Mantequilla", "gama": "Beiges", "hex": "#F0DC90", "producto": "Plástica Interior"}, {"codigo": "D-20", "nombre": "Amarillo Suave", "gama": "Amarillos", "hex": "#F5E060", "producto": "Plástica Interior"}, {"codigo": "D-21", "nombre": "Amarillo Sol", "gama": "Amarillos", "hex": "#F0C830", "producto": "Fachadas"}, {"codigo": "D-22", "nombre": "Amarillo Ocre", "gama": "Amarillos", "hex": "#D4A020", "producto": "Fachadas"}, {"codigo": "D-30", "nombre": "Salmón Claro", "gama": "Salmones", "hex": "#F4B090", "producto": "Fachadas"}, {"codigo": "D-31", "nombre": "Salmón", "gama": "Salmones", "hex": "#F09070", "producto": "Fachadas"}, {"codigo": "D-32", "nombre": "Salmón Oscuro", "gama": "Salmones", "hex": "#E07050", "producto": "Fachadas"}, {"codigo": "D-33", "nombre": "Melocotón", "gama": "Salmones", "hex": "#F8C090", "producto": "Plástica Interior"}, {"codigo": "D-34", "nombre": "Albaricoque", "gama": "Salmones", "hex": "#F0A870", "producto": "Fachadas"}, {"codigo": "D-40", "nombre": "Terracota Claro", "gama": "Terracotas", "hex": "#D08060", "producto": "Fachadas"}, {"codigo": "D-41", "nombre": "Terracota", "gama": "Terracotas", "hex": "#C06840", "producto": "Fachadas"}, {"codigo": "D-42", "nombre": "Terracota Oscuro", "gama": "Terracotas", "hex": "#A85030", "producto": "Fachadas"}, {"codigo": "D-43", "nombre": "Teja", "gama": "Terracotas", "hex": "#B86040", "producto": "Fachadas"}, {"codigo": "D-44", "nombre": "Rojo Óxido", "gama": "Terracotas", "hex": "#983020", "producto": "Fachadas"}, {"codigo": "D-50", "nombre": "Marrón Claro", "gama": "Marrones", "hex": "#C09060", "producto": "Fachadas"}, {"codigo": "D-51", "nombre": "Marrón Tierra", "gama": "Marrones", "hex": "#A07040", "producto": "Fachadas"}, {"codigo": "D-52", "nombre": "Marrón Oscuro", "gama": "Marrones", "hex": "#806030", "producto": "Fachadas"}, {"codigo": "D-53", "nombre": "Chocolate", "gama": "Marrones", "hex": "#604020", "producto": "Fachadas"}, {"codigo": "D-60", "nombre": "Gris Perla", "gama": "Grises", "hex": "#E0E0E0", "producto": "Plástica Interior/Exterior"}, {"codigo": "D-61", "nombre": "Gris Plata", "gama": "Grises", "hex": "#C8C8C8", "producto": "Plástica Interior/Exterior"}, {"codigo": "D-62", "nombre": "Gris Medio", "gama": "Grises", "hex": "#A8A8A8", "producto": "Fachadas"}, {"codigo": "D-63", "nombre": "Gris Oscuro", "gama": "Grises", "hex": "#787878", "producto": "Fachadas"}, {"codigo": "D-64", "nombre": "Gris Antracita", "gama": "Grises", "hex": "#484848", "producto": "Fachadas"}, {"codigo": "D-65", "nombre": "Gris Neutro", "gama": "Grises", "hex": "#909090", "producto": "Plástica Interior/Exterior"}, {"codigo": "D-70", "nombre": "Verde Claro", "gama": "Verdes", "hex": "#90C890", "producto": "Plástica Interior"}, {"codigo": "D-71", "nombre": "Verde Salvia", "gama": "Verdes", "hex": "#70A870", "producto": "Fachadas"}, {"codigo": "D-72", "nombre": "Verde Oscuro", "gama": "Verdes", "hex": "#407840", "producto": "Fachadas"}, {"codigo": "D-73", "nombre": "Verde Musgo", "gama": "Verdes", "hex": "#506050", "producto": "Fachadas"}, {"codigo": "D-80", "nombre": "Azul Celeste", "gama": "Azules", "hex": "#A0C8E8", "producto": "Plástica Interior"}, {"codigo": "D-81", "nombre": "Azul Suave", "gama": "Azules", "hex": "#7098C0", "producto": "Plástica Interior"}, {"codigo": "D-82", "nombre": "Azul Medio", "gama": "Azules", "hex": "#4070A8", "producto": "Fachadas"}, {"codigo": "D-83", "nombre": "Azul Marino", "gama": "Azules", "hex": "#204878", "producto": "Fachadas"}, {"codigo": "D-90", "nombre": "Rosa Suave", "gama": "Rosas", "hex": "#F0C0C0", "producto": "Plástica Interior"}, {"codigo": "D-91", "nombre": "Rosa", "gama": "Rosas", "hex": "#E09898", "producto": "Plástica Interior"}, {"codigo": "D-92", "nombre": "Lila", "gama": "Rosas", "hex": "#D0A0C8", "producto": "Plástica Interior"}];
+var durcGama='Todos';
+function abrirCartaDurcaplast(){document.getElementById('durc-modal').style.display='flex';durcGama='Todos';renderGamasDurc();renderListaDurc(DURC_DATA);document.getElementById('durc-search').value='';}
+function cerrarDurc(){document.getElementById('durc-modal').style.display='none';}
+function renderGamasDurc(){
+  var cont=document.getElementById('durc-familias'),gamas=['Todos'];
+  DURC_DATA.forEach(function(c){if(gamas.indexOf(c.gama)===-1)gamas.push(c.gama);});
+  cont.innerHTML='';
+  gamas.forEach(function(g){
+    var btn=document.createElement('button');
+    btn.textContent=g;
+    var activo=g===durcGama;
+    btn.style.cssText='padding:5px 12px;border-radius:20px;border:1.5px solid '+(activo?'#2d7a2d':'#e2e8f0')+';background:'+(activo?'#2d7a2d':'white')+';color:'+(activo?'white':'#374151')+';font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;';
+    btn.addEventListener('click',function(){durcGama=g;renderGamasDurc();filtrarDurc(document.getElementById('durc-search').value);});
+    cont.appendChild(btn);
+  });
+}
+function filtrarDurc(b){
+  b=b.toLowerCase().trim();
+  renderListaDurc(DURC_DATA.filter(function(c){
+    return (durcGama==='Todos'||c.gama===durcGama)&&(!b||c.codigo.toLowerCase().includes(b)||c.nombre.toLowerCase().includes(b)||c.producto.toLowerCase().includes(b));
+  }));
+}
+function renderListaDurc(lista){
+  var cont=document.getElementById('durc-lista');cont.innerHTML='';
+  if(!lista.length){cont.innerHTML='<div style="text-align:center;padding:40px;color:#94a3b8;">No encontrado</div>';return;}
+  lista.forEach(function(color){
+    var item=document.createElement('div');
+    item.style.cssText='padding:10px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;border-bottom:1px solid #f8fafc;';
+    var m=document.createElement('div');m.style.cssText='width:44px;height:44px;border-radius:10px;background:'+color.hex+';flex-shrink:0;border:1px solid rgba(0,0,0,0.1);';
+    var info=document.createElement('div');info.style.cssText='flex:1;min-width:0;';
+    info.innerHTML='<div style="font-size:14px;font-weight:600;color:#0f172a;">'+color.nombre+'</div><div style="font-size:11px;color:#94a3b8;font-family:monospace;">'+color.codigo+' · '+color.hex+'</div><div style="font-size:11px;color:#2d7a2d;font-weight:600;">'+color.producto+'</div>';
+    var btnC=document.createElement('button');
+    btnC.style.cssText='background:#f0fff0;border:1px solid #2d7a2d;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;color:#2d7a2d;cursor:pointer;flex-shrink:0;';
+    btnC.textContent='Copiar';
+    btnC.addEventListener('click',function(e){e.stopPropagation();if(navigator.clipboard)navigator.clipboard.writeText(color.codigo+' · '+color.nombre);showToast('Copiado: '+color.codigo);});
+    item.appendChild(m);item.appendChild(info);item.appendChild(btnC);
+    item.addEventListener('click',function(){if(navigator.clipboard)navigator.clipboard.writeText(color.codigo+' · '+color.nombre);showToast(color.codigo+' · '+color.nombre);cerrarDurc();});
+    item.addEventListener('mouseover',function(){item.style.background='#f0fff0';});
+    item.addEventListener('mouseout',function(){item.style.background='';});
+    cont.appendChild(item);
+  });
+}
+</script>
+</body>
+</html>
