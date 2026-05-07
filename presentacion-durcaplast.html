@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Durcaplast · App para Pintores</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#0a1a0a;color:#f0f0f0;min-height:100vh;overflow-x:hidden}
+
+/* LOADER */
+#loader{position:fixed;inset:0;background:#0a1a0a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.6s}
+#loader.hide{opacity:0;pointer-events:none}
+.loader-logo{width:90px;height:90px;margin-bottom:20px;animation:pulse 1.5s infinite}
+.loader-brand{font-family:'Space Grotesk',sans-serif;font-size:24px;color:#fff;margin-bottom:6px}
+.loader-sub{font-size:13px;color:rgba(255,255,255,0.5)}
+.loader-bar{width:200px;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;margin-top:24px;overflow:hidden}
+.loader-fill{height:100%;background:linear-gradient(90deg,#2d7a2d,#5cb85c);border-radius:2px;animation:load 1.8s ease forwards}
+@keyframes load{from{width:0}to{width:100%}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+
+/* MAIN */
+#main{display:none;opacity:0;transition:opacity 0.6s}
+#main.show{display:block;opacity:1}
+
+/* HERO */
+.hero{
+  min-height:100vh;
+  background:linear-gradient(160deg,#071207 0%,#0f2a0f 40%,#1a3d1a 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 24px;text-align:center;position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 30%,rgba(45,122,45,0.15) 0%,transparent 70%);
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(45,122,45,0.2);border:1px solid rgba(45,122,45,0.4);
+  padding:8px 18px;border-radius:30px;font-size:12px;font-weight:600;
+  color:#7dcf7d;text-transform:uppercase;letter-spacing:1px;margin-bottom:28px;
+}
+.hero-logo{width:100px;height:100px;object-fit:contain;margin-bottom:20px;filter:drop-shadow(0 0 20px rgba(45,122,45,0.5))}
+.hero-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(28px,7vw,48px);font-weight:800;line-height:1.1;margin-bottom:16px}
+.hero-title span{color:#5cb85c}
+.hero-sub{font-size:clamp(14px,3.5vw,18px);color:rgba(255,255,255,0.65);max-width:480px;line-height:1.6;margin-bottom:32px}
+.hero-name{
+  background:rgba(45,122,45,0.15);border:1px solid rgba(45,122,45,0.3);
+  border-radius:16px;padding:16px 28px;margin-bottom:32px;
+  font-size:14px;color:rgba(255,255,255,0.7);
+}
+.hero-name strong{display:block;font-size:18px;color:#fff;font-family:'Space Grotesk',sans-serif}
+.btn-primary{
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,#2d7a2d,#1a4d1a);
+  color:white;padding:16px 32px;border-radius:14px;
+  font-size:16px;font-weight:700;text-decoration:none;
+  box-shadow:0 8px 30px rgba(45,122,45,0.4);
+  transition:transform 0.2s,box-shadow 0.2s;
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(45,122,45,0.5)}
+.scroll-hint{margin-top:40px;color:rgba(255,255,255,0.3);font-size:13px;animation:bounce 2s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+/* SECTIONS */
+section{padding:60px 24px;max-width:600px;margin:0 auto}
+
+/* PROBLEMA */
+.problem-section{background:linear-gradient(180deg,#0a1a0a,#0d1f0d)}
+.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#5cb85c;margin-bottom:12px}
+.section-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(22px,5vw,30px);font-weight:800;line-height:1.2;margin-bottom:20px}
+.section-title span{color:#5cb85c}
+.pain-list{display:flex;flex-direction:column;gap:12px;margin-top:24px}
+.pain-item{
+  display:flex;align-items:center;gap:14px;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px;padding:14px 16px;
+}
+.pain-icon{font-size:22px;flex-shrink:0}
+.pain-text{font-size:14px;color:rgba(255,255,255,0.75);line-height:1.4}
+
+/* SOLUCIÓN */
+.solution-section{background:linear-gradient(180deg,#0d1f0d,#0a1a0a)}
+.feature-grid{display:flex;flex-direction:column;gap:14px;margin-top:28px}
+.feature-card{
+  background:rgba(45,122,45,0.08);border:1px solid rgba(45,122,45,0.2);
+  border-radius:14px;padding:18px 20px;
+  display:flex;align-items:flex-start;gap:14px;
+  transition:border-color 0.2s,background 0.2s;
+}
+.feature-card:hover{border-color:rgba(45,122,45,0.4);background:rgba(45,122,45,0.12)}
+.feat-icon{
+  width:44px;height:44px;border-radius:11px;
+  background:rgba(45,122,45,0.2);display:flex;align-items:center;
+  justify-content:center;font-size:20px;flex-shrink:0;
+}
+.feat-title{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px}
+.feat-desc{font-size:13px;color:rgba(255,255,255,0.6);line-height:1.4}
+
+/* COLORES */
+.colors-section{background:linear-gradient(180deg,#0a1a0a,#0d1f0d)}
+.color-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:24px}
+.color-card{
+  border-radius:12px;padding:12px;text-align:center;
+  border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);
+}
+.color-swatch{width:40px;height:40px;border-radius:10px;margin:0 auto 8px;border:2px solid rgba(255,255,255,0.15)}
+.color-name{font-size:11px;font-weight:600;color:#fff;line-height:1.2;margin-bottom:2px}
+.color-count{font-size:10px;color:rgba(255,255,255,0.4)}
+
+/* DEMO */
+.demo-section{background:linear-gradient(180deg,#0d1f0d,#071a07)}
+.mockup{
+  background:linear-gradient(135deg,#1a2e1a,#0f1f0f);
+  border:1px solid rgba(45,122,45,0.3);border-radius:20px;
+  padding:20px;margin-top:24px;
+}
+.mock-header{
+  background:linear-gradient(135deg,#2d7a2d,#1a4d1a);
+  border-radius:12px;padding:14px 16px;
+  display:flex;align-items:center;gap:10px;margin-bottom:14px;
+}
+.mock-avatar{
+  width:36px;height:36px;border-radius:8px;
+  background:rgba(255,255,255,0.2);
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;
+}
+.mock-name{font-size:14px;font-weight:700;color:#fff}
+.mock-sub{font-size:11px;color:rgba(255,255,255,0.7)}
+.mock-row{
+  display:flex;justify-content:space-between;padding:10px 12px;
+  background:rgba(255,255,255,0.04);border-radius:10px;margin-bottom:8px;
+  font-size:13px;
+}
+.mock-row span:last-child{color:#5cb85c;font-weight:700}
+.mock-total{
+  background:rgba(45,122,45,0.2);border:1px solid rgba(45,122,45,0.4);
+  border-radius:10px;padding:12px;display:flex;justify-content:space-between;
+  font-size:16px;font-weight:800;color:#5cb85c;margin-top:4px;
+}
+
+/* SPONSOR */
+.sponsor-bar{
+  background:linear-gradient(135deg,#2d7a2d,#1a4d1a);
+  padding:20px 24px;display:flex;align-items:center;gap:14px;
+  margin-top:20px;border-radius:14px;
+}
+.sponsor-logo{width:48px;height:48px;object-fit:contain;background:rgba(255,255,255,0.15);border-radius:10px;padding:4px}
+.sponsor-name{font-size:15px;font-weight:800;color:#fff}
+.sponsor-sub{font-size:12px;color:rgba(255,255,255,0.7)}
+
+/* CTA */
+.cta-section{
+  background:linear-gradient(160deg,#0f2a0f,#071207);
+  padding:60px 24px;text-align:center;
+}
+.cta-inner{max-width:500px;margin:0 auto}
+.cta-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(24px,6vw,36px);font-weight:800;margin-bottom:16px}
+.cta-title span{color:#5cb85c}
+.cta-desc{font-size:15px;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:32px}
+.cta-buttons{display:flex;flex-direction:column;gap:12px;align-items:center}
+.btn-whatsapp{
+  display:inline-flex;align-items:center;gap:10px;
+  background:#25D366;color:white;
+  padding:16px 32px;border-radius:14px;
+  font-size:16px;font-weight:700;text-decoration:none;
+  box-shadow:0 8px 30px rgba(37,211,102,0.3);width:100%;max-width:320px;
+  justify-content:center;
+}
+.btn-web{
+  display:inline-flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);
+  color:white;padding:14px 28px;border-radius:14px;
+  font-size:15px;font-weight:600;text-decoration:none;width:100%;max-width:320px;
+  justify-content:center;
+}
+.firma{
+  margin-top:48px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.08);
+  font-size:12px;color:rgba(255,255,255,0.3);line-height:1.6;
+}
+
+/* DIVIDER */
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(45,122,45,0.3),transparent);max-width:600px;margin:0 auto}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <img src="icono-durcaplast.png" class="loader-logo" alt="Durcaplast">
+  <div class="loader-brand">Durcaplast</div>
+  <div class="loader-sub">Fábrica de Pinturas · Dúrcal, Granada</div>
+  <div class="loader-bar"><div class="loader-fill"></div></div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">🎨 Novedad para pintores profesionales</div>
+    <img src="icono-durcaplast.png" class="hero-logo" alt="Durcaplast">
+    <h1 class="hero-title">La app que tus<br><span>pintores necesitan</span></h1>
+    <p class="hero-sub">DurcaplastApp — herramienta gratuita para hacer presupuestos profesionales en segundos, con carta de colores Durcaplast integrada.</p>
+    <div class="hero-name">
+      Preparado especialmente para<br>
+      <strong>Manuel Jesús Lora</strong>
+    </div>
+    <a href="#solucion" class="btn-primary">📱 Ver cómo funciona</a>
+    <div class="scroll-hint">▼ Desliza para ver</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- PROBLEMA -->
+  <div class="problem-section">
+    <section>
+      <div class="section-label">El problema</div>
+      <h2 class="section-title">¿Qué les pasa a tus<br><span>pintores clientes?</span></h2>
+      <div class="pain-list">
+        <div class="pain-item"><div class="pain-icon">📝</div><div class="pain-text">Hacen presupuestos a mano o en papel — lentos, poco profesionales</div></div>
+        <div class="pain-item"><div class="pain-icon">🎨</div><div class="pain-text">Tienen que buscar la carta de colores en papel o en internet cada vez</div></div>
+        <div class="pain-item"><div class="pain-icon">📄</div><div class="pain-text">No entregan PDF al cliente — pierden credibilidad y trabajos</div></div>
+        <div class="pain-item"><div class="pain-icon">📱</div><div class="pain-text">No tienen herramientas digitales adaptadas a su trabajo</div></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SOLUCIÓN -->
+  <div class="solution-section" id="solucion">
+    <section>
+      <div class="section-label">La solución</div>
+      <h2 class="section-title">DurcaplastApp —<br><span>todo en uno</span></h2>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feat-icon">⚡</div>
+          <div><div class="feat-title">Presupuesto en 2 minutos</div><div class="feat-desc">El pintor añade partidas de trabajo, cantidades y precios con voz o teclado. Cálculo automático con IVA.</div></div>
+        </div>
+        <div class="feature-card">
+          <div class="feat-icon">📄</div>
+          <div><div class="feat-title">PDF profesional al instante</div><div class="feat-desc">Genera un PDF con logo del pintor, datos del cliente, desglose de partidas y totales. Listo para enviar por WhatsApp.</div></div>
+        </div>
+        <div class="feature-card">
+          <div class="feat-icon">🎨</div>
+          <div><div class="feat-title">Carta Durcaplast integrada</div><div class="feat-desc">44 colores Durcaplast organizados por gamas, más carta NCS y RAL. Copia el código de color con un toque.</div></div>
+        </div>
+        <div class="feature-card">
+          <div class="feat-icon">🎤</div>
+          <div><div class="feat-title">Control por voz</div><div class="feat-desc">Todos los campos aceptan dictado por voz. Ideal para usar en obra sin quitarse los guantes.</div></div>
+        </div>
+        <div class="feature-card">
+          <div class="feat-icon">📲</div>
+          <div><div class="feat-title">Instala como app en el móvil</div><div class="feat-desc">Sin App Store, sin Google Play. El pintor la instala directamente desde el navegador en 10 segundos.</div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- COLORES -->
+  <div class="colors-section">
+    <section>
+      <div class="section-label">Carta de colores</div>
+      <h2 class="section-title">Tus colores,<br><span>siempre a mano</span></h2>
+      <p style="font-size:14px;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:8px;">Los pintores tienen la carta Durcaplast en el móvil, organizada y con buscador. Tus productos, presentes cada vez que presupuestan.</p>
+      <div class="color-cards">
+        <div class="color-card"><div class="color-swatch" style="background:#2d7a2d"></div><div class="color-name">Durcaplast</div><div class="color-count">44 colores</div></div>
+        <div class="color-card"><div class="color-swatch" style="background:#1a5ea6"></div><div class="color-name">Carta NCS</div><div class="color-count">103 colores</div></div>
+        <div class="color-card"><div class="color-swatch" style="background:#c0392b"></div><div class="color-name">Carta RAL</div><div class="color-count">84 colores</div></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- DEMO -->
+  <div class="demo-section">
+    <section>
+      <div class="section-label">Así se ve</div>
+      <h2 class="section-title">App personalizada<br><span>para cada pintor</span></h2>
+      <div class="mockup">
+        <div class="mock-header">
+          <div class="mock-avatar">JP</div>
+          <div><div class="mock-name">Juan Pintores</div><div class="mock-sub">Pintura interior y exterior</div></div>
+        </div>
+        <div class="mock-row"><span>Pintura plástica interior</span><span>320,00 €</span></div>
+        <div class="mock-row"><span>Fijador Durcaplast</span><span>85,00 €</span></div>
+        <div class="mock-row"><span>Encintado y protección</span><span>45,00 €</span></div>
+        <div class="mock-total"><span>TOTAL</span><span>495,50 €</span></div>
+      </div>
+      <div class="sponsor-bar">
+        <img src="icono-durcaplast.png" class="sponsor-logo" alt="Durcaplast">
+        <div>
+          <div class="sponsor-name">Durcaplast · Fábrica de Pinturas</div>
+          <div class="sponsor-sub">Aparece en la app y en cada PDF generado</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <div class="cta-inner">
+      <h2 class="cta-title">¿Lo probamos<br><span>juntos?</span></h2>
+      <p class="cta-desc">La app ya está lista. Tus pintores la pueden usar hoy mismo — gratis, desde el móvil, sin instalaciones. Cuéntame qué te parece.</p>
+      <div class="cta-buttons">
+        <a href="https://bufeteimpagosojuridicos-byte.github.io/durcaplast-app/" class="btn-primary" target="_blank">📱 Probar DurcaplastApp</a>
+        <a href="https://wa.me/34643223301?text=Hola%20Juan%20Manuel%2C%20he%20visto%20la%20presentaci%C3%B3n%20de%20DurcaplastApp%20y%20me%20interesa%20hablar%20contigo" class="btn-whatsapp" target="_blank">💬 Hablar por WhatsApp</a>
+        <a href="https://durcaplast.com" class="btn-web" target="_blank">🌐 durcaplast.com</a>
+      </div>
+      <div class="firma">
+        Presentación preparada por<br>
+        <strong style="color:rgba(255,255,255,0.6);">Juan Manuel · JM Prestige AI Solutions</strong><br>
+        info@obracontrolgps.net · +34 643 223 301
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    document.getElementById('loader').classList.add('hide');
+    var main = document.getElementById('main');
+    main.style.display = 'block';
+    setTimeout(function() { main.classList.add('show'); }, 50);
+  }, 2000);
+});
+// Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(function(a) {
+  a.addEventListener('click', function(e) {
+    var target = document.querySelector(this.getAttribute('href'));
+    if (target) { e.preventDefault(); target.scrollIntoView({behavior:'smooth'}); }
+  });
+});
+</script>
+</body>
+</html>
