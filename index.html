@@ -473,15 +473,10 @@ document.head.appendChild(link);
       <button class="btn-pdf" onclick="generarPDF()">📄 Generar PDF</button>
       <button class="btn-clear" onclick="netejar()">🗑 Limpiar</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;"><button onclick="abrirCartaDurcaplast()" style="padding:10px 4px;border-radius:12px;border:2px solid #2d7a2d;background:white;color:#2d7a2d;font-size:12px;font-weight:700;cursor:pointer;">🟢 Durcaplast</button><button onclick="abrirCartaNCS()" style="padding:10px 4px;border-radius:12px;border:2px solid #1a5ea6;background:white;color:#1a5ea6;font-size:12px;font-weight:700;cursor:pointer;">🎨 NCS</button><button onclick="abrirCartaRAL()" style="padding:10px 4px;border-radius:12px;border:2px solid #c0392b;background:white;color:#c0392b;font-size:12px;font-weight:700;cursor:pointer;">🎨 RAL</button></div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-      <button onclick="abrirCartaNCS()" style="padding:13px;border-radius:12px;border:2px solid #003d8f;background:white;color:#003d8f;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-        🎨 Carta NCS
-      </button>
-      <button onclick="abrirCartaRAL()" style="padding:13px;border-radius:12px;border:2px solid #c0392b;background:white;color:#c0392b;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-        🎨 Carta RAL
-      </button>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+      <button onclick="abrirCartaDurcaplast()" style="padding:12px 4px;border-radius:12px;border:2px solid #2d7a2d;background:white;color:#2d7a2d;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">🟢 Durcaplast</button>
+      <button onclick="abrirCartaNCS()" style="padding:12px 4px;border-radius:12px;border:2px solid #1a5ea6;background:white;color:#1a5ea6;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">🎨 NCS</button>
+      <button onclick="abrirCartaRAL()" style="padding:12px 4px;border-radius:12px;border:2px solid #c0392b;background:white;color:#c0392b;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">🎨 RAL</button>
     </div>
     <div id="pwa-install-bar" style="display:none;margin-bottom:16px;">
       <button id="btnInstalar" onclick="instalarPWA()" style="
